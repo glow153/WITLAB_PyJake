@@ -1,7 +1,8 @@
 from pyspark import (SparkConf, SparkContext)
 from pyspark.sql import SQLContext
 from pyspark.sql.functions import udf
-from pyspark.sql.types import (IntegerType, StringType, DoubleType, FloatType)
+from pyspark.sql.types import (IntegerType, StringType, DoubleType)
+from sqlalchemy import create_engine
 
 clean_day_list = ['2017-04-13', '2017-04-19', '2017-04-24', '2017-05-01', '2017-05-17',
                   '2017-06-02', '2017-06-15', '2017-08-26', '2017-09-01', '2017-09-13',
@@ -45,6 +46,19 @@ class PySparkManager(Singleton):
 
     def _set_sql_context(self):
         return SQLContext(self.sc)
+
+
+class MysqlManager(Singleton):
+    def __init__(self):
+        pass
+
+    def init(self, conn_args: list):
+        # args => list ['username', 'passwd', 'host', int(port), 'db_name']
+        self.engine = create_engine('mysql+pymysql://%s:%s@%s:%d/%s' % tuple(conn_args), encoding='utf-8')
+        self.conn = self.engine.connect()
+
+    def close(self):
+        self.conn.close()
 
 
 def weather(month):

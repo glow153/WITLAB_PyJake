@@ -1,6 +1,6 @@
 import datetime
 import pandas as pd
-from under_develop.abs_class import AbsApi
+from abs_class import AbsApi
 
 
 class RealtimeParticulateMatter(AbsApi):
@@ -113,12 +113,12 @@ class RealtimeParticulateMatter(AbsApi):
             for _station in self._station_list:
                 self._req_api(location=_station, term=term)
                 self._json2pdf(term=term)
-                self._pdf2parquet(mode=mode)
+                self.pdf2hdfs(mode=mode)
 
         else:
             self._req_api(location=station, term=term)
             self._json2pdf(term=term)
-            self._pdf2parquet(mode='append', debug=debug)
+            self.pdf2hdfs(mode='append', debug=debug)
 
 
 if __name__ == '__main__':

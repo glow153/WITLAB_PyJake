@@ -11,7 +11,7 @@ class ParticulateMatterLogger(threading.Thread):
         self.running = False
         self.debug = debug
 
-        self.rpm = RealtimeParticulateMatter(service_key)
+        self.rpm = RealtimeParticulateMatter(service_key, debug)
 
     def current_time_millis(self):
         return int(round(time.time() * 1000))
@@ -21,20 +21,19 @@ class ParticulateMatterLogger(threading.Thread):
         current_ms = 0
 
         print('logging start...')
-        self.rpm.log(term='hourly', debug=self.debug)
+        self.rpm.log(['hdfs', 'mysql'], term='hourly')
         print('logging end.')
 
         while self.on:
             current_ms = self.current_time_millis()
 
-            if self.debug and \
-                    ((current_ms - last_ms) / 1000 - int((current_ms - last_ms) / 1000)) == 0:
-                print('debug> sec:', (current_ms - last_ms) / 1000)
+            # if (current_ms - last_ms) / 1000 - int((current_ms - last_ms) / 1000) == 0:
+            #     self.rpm.debug_print('debug> sec:' + str((current_ms - last_ms) / 1000))
 
             if current_ms - last_ms > 3600000:
                 last_ms = current_ms
                 print('logging start...')
-                self.rpm.log(term='hourly', debug=self.debug)
+                self.rpm.log(['hdfs', 'mysql'], term='hourly')
                 print('logging end.')
 
             time.sleep(0.001)
@@ -64,7 +63,7 @@ class ParticulateMatterLogger(threading.Thread):
 
 if __name__ == '__main__':
     key = 'zo2rUB1wM3I11GNZFDuB84l4C94PZjP6cEb4qEff%2B94h83%2Fihaj1JJS75%2Bm0uHdFCchJw7SyGE0HZgKiZDpq%2FA%3D%3D'
-    logger_pm = ParticulateMatterLogger(service_key=key, debug=False)
+    logger_pm = ParticulateMatterLogger(service_key=key, debug=True)
     logger_pm.start_logging()
 
     try:
