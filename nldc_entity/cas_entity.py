@@ -4,7 +4,7 @@ import os
 
 class CasEntity:
     """
-    CAS 140 CT - 152 Spectroradiometer Measurement Data
+    CAS 140 CT - 152 Spectrometer Measurement Data
     <용어 정리>
     엔티티 (entity) : CAS 1회 측정에 해당하는 광특성 집합, ISD 파일 하나를 의미
     광특성 요소 (element) : ISD 로 출력되는 모든 값 하나하나 (ex. 조도 : Photometric)
@@ -31,7 +31,13 @@ class CasEntity:
 
         :param fname: ISD 파일의 절대경로, :type: str
         """
-        isdfile = open(fname, 'rt', encoding='utf-8', errors='ignore')
+
+        try:
+            isdfile = open(fname, 'rt', encoding='utf-8', errors='ignore')
+        except (FileNotFoundError, PermissionError):
+            self.valid = False
+            return
+
         self.valid = self.__map_data(isdfile)
         isdfile.close()
 

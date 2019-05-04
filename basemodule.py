@@ -47,6 +47,15 @@ class PySparkManager(Singleton):
     def _set_sql_context(self):
         return SQLContext(self.sc)
 
+    def close(self):
+        self.sc.stop()
+
+    def __enter__(self):
+        self.__init__()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
+
 
 class MysqlManager(Singleton):
     def __init__(self):
@@ -69,7 +78,7 @@ def weather(month):
     elif 9 <= month <= 11:
         return 2
     elif month <= 12 or 1 <= month <= 2:
-        return 4
+        return 3
     else:
         return -1
 
@@ -119,7 +128,8 @@ udf_minute = udf(lambda time: int(time.split(':')[1]), IntegerType())
 
 udf_dt2dh = udf(lambda d, t: d + ' ' + t.split(':')[0], StringType())
 udf_dnt2dt = udf(lambda d, t: d + ' ' + t, StringType())
-udf_dh2d = udf(lambda dh: dh.split(' ')[0], StringType())
+udf_dt2d = udf(lambda dt: dt.split(' ')[0], StringType())
+udf_dt2t = udf(lambda dt: dt.split(' ')[1], StringType())
 udf_dh2h = udf(lambda dh: int(dh.split(' ')[1]), IntegerType())
 udf_ymd2ym = udf(lambda ymd: ymd[:-3], StringType())
 udf_date2month = udf(lambda d: d.split('-')[1], StringType())
@@ -131,4 +141,8 @@ udf_weather = udf(weather, IntegerType())
 udf_classifyPm10 = udf(classifyPm10, IntegerType())
 udf_classifyPm25 = udf(classifyPm25, IntegerType())
 udf_floatize = udf(floatize, DoubleType())
+
+udf_30min = udf(lambda t: t.split(':')[0] + ':' + ('00' if int(int(t.split(':')[1]) / 30) == 0 else '30'))
+udf_10min = udf(lambda t: t[:3] + str(int(int(t[3:])/10)) + '0', StringType())
+
 

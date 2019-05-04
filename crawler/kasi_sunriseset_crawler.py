@@ -13,7 +13,7 @@ class ScrapSunRiseSet:
         self.debug = debug
         if self.debug:
             print('dbg> init driver...')
-        chrome_driver_path = './drivers/chromedriver'
+        chrome_driver_path = './driver/chromedriver'
         self.options = webdriver.ChromeOptions()
         self.options.add_argument('headless')
         self.options.add_argument('disable-gpu')

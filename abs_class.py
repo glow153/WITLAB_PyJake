@@ -205,9 +205,10 @@ class AbsCrawler(metaclass=ABCMeta):
             print('dbg__', datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') + '>', content)
 
     def _init_driver(self):  # 드라이버와 옵션을 클래스화하여 싱글톤으로 만들면 좋을듯
+        import os
         self._debug_print('init driver...')
 
-        chrome_driver_path = os.getcwd() + '/driver/chromedriver.exe'
+        chrome_driver_path = os.getcwd() + '/../driver/chromedriver'
         self._options = webdriver.ChromeOptions()
         self._options.add_argument('headless')
         self._options.add_argument('disable-gpu')
