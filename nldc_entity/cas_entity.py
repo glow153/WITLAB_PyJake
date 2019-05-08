@@ -20,7 +20,7 @@ class CasEntity:
     valid = None  # 유효 플래그 (ISD 파일이 올바른 형식이고 mapping이 정상적이면 True)
     objDatetime = None  # 측정 시간 객체, str으로 반환 및 시간연산을 위해 쓰임
 
-    def __init__(self, fname):
+    def __init__(self, fname: str, debug=False):
         """
         1. ISD 파일 읽기
         2. mapping
@@ -30,6 +30,7 @@ class CasEntity:
         6. 측정 시간 객체 생성
 
         :param fname: ISD 파일의 절대경로, :type: str
+        :param debug: ISD parsing debug mode, :type: bool
         """
 
         try:
@@ -107,6 +108,7 @@ class CasEntity:
                     pass
 
             line = file.readline()
+
         return True
 
     def __set_additional_data(self, alg='rect'):
@@ -167,13 +169,23 @@ class CasEntity:
         else:
             return self.objDatetime
 
-    def get_category(self, category='all', to_json=False):
+    def get_category(self, category='all', str_key_type=False, to_json=False):
         """
         ISD 파일의 큰 범주에 해당하는 전체 데이터를 dictionary 형태로 반환
         :param category: 범주 이름
+        :param str_key_type: True이면 key type을 문자열('str')로 변경, bson 호환성 위함
         :param to_json: json으로 반환
         :return: 범주 데이터 집합, :type: dictionary or json
         """
+
+        # MongoDB의 기본 데이터형식인 bson은 key가 무조건 str이어야한다...
+        # 그래서 str type key가 아닌 유일한 dict category인 spectral irradiance data dict에 대해
+        # key type change code가 필요하다
+        sp_ird = {}
+        if str_key_type:
+            keyset = self.__data.keys()
+            for key in keyset:
+                sp_ird[str(key).replace('.', '_')] = self.__data[key]
 
         d = {}
         if category == 'measurement conditions':
@@ -183,18 +195,18 @@ class CasEntity:
         elif category == 'general information':
             d = self.__general_information
         elif category == 'data':
-            d = self.__data
+            d = sp_ird if str_key_type else self.__data
         elif category == 'uv':
             d = self.__uv
 
         elif category == 'all':
-            d = {
+            d = {self.get_datetime(True): {
                 'measurement conditions': self.__measurement_conditions,
                 'results': self.__results,
                 'general information': self.__general_information,
-                'data': self.__data,
+                'data': sp_ird if str_key_type else self.__data,
                 'uv': self.__uv
-            }
+            }}
 
         if to_json:
             import json
@@ -304,13 +316,15 @@ class CasEntity:
 
 
 if __name__ == '__main__':
-    rootdir = 'D:/Desktop/확장곰국용/20181003'
+    import pprint
+    rootdir = 'D:/_nldw/20170412'
     flist = CasEntity.search(rootdir)
 
     for fname in flist:
-        # print('>>' + fname)
+        print('>>', fname)
         entity = CasEntity(fname)
-        a = entity.get_ird(200, 800)
-        print(a)
+        d = entity.get_category(category='all')
+        pprint.pprint(d)
+        break
 
 
