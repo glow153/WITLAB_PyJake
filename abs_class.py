@@ -17,17 +17,18 @@ class AbsApi(metaclass=ABCMeta):
     _debug = False
 
     def __init__(self, base_url: str, service_key: str, column_list: list,
-                 hdfs_path: str, mysql_conn_args: list, debug: bool):
+                 hdfs_path: str, mysql_conn_args: list, tag='', debug=False):
         self._base_url = base_url
         self._service_key = service_key
         self._column = column_list
         self._hdfs_path = hdfs_path
         self._mysql_conn_args = mysql_conn_args
         self._debug = debug
+        self._tag = tag
 
-    def debug_print(self, content: str):
+    def _debug_print(self, content: str):
         if self._debug:
-            print('dbg_' + datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') + '>', content)
+            print('dbg_' + self._tag + ' ' + datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') + '>', content)
 
     @abstractmethod
     def _make_query_param(self, **kwargs):
@@ -67,7 +68,7 @@ class AbsApi(metaclass=ABCMeta):
         else:
             path = hdfs_path
 
-        self.debug_print('pdf -> parquet :: ' + str(list(self._pdf.iloc[0])))
+        self._debug_print('pdf -> parquet :: ' + str(list(self._pdf.iloc[0])))
 
         # make spark dataframe
         self._spdf = PySparkManager().sqlctxt.createDataFrame(self._pdf)
@@ -75,7 +76,7 @@ class AbsApi(metaclass=ABCMeta):
         # append new data
         self._spdf.write.mode(mode).parquet(path)
 
-        self.debug_print('parquet write completed.')
+        self._debug_print('parquet write completed.')
 
     def pdf2mysql(self, table_name: str, if_exists: str = 'append'):
         """
@@ -84,7 +85,7 @@ class AbsApi(metaclass=ABCMeta):
         :param if_exists: to_sql() params, ex. 'append', 'replace', 'fail'
         :return: nothing
         """
-        self.debug_print('pdf -> mysql :: ' + str(list(self._pdf.iloc[0])))
+        self._debug_print('pdf -> mysql :: ' + str(list(self._pdf.iloc[0])))
 
         # connect to mysql
         mm = MysqlManager()
@@ -96,7 +97,7 @@ class AbsApi(metaclass=ABCMeta):
         # db close
         mm.close()
 
-        self.debug_print('mysql write completed.')
+        self._debug_print('mysql write completed.')
 
     def pdf2csv(self, out_path: str):
         """
@@ -152,38 +153,68 @@ class AbsApi(metaclass=ABCMeta):
 
 
 class AbsLogger(threading.Thread, metaclass=ABCMeta):
-
-    def __init__(self, api_obj, tag, debug=False):
+    def __init__(self, api_obj, tag, interval=3600000, debug=False, **log_properties):
         threading.Thread.__init__(self)
 
-        self.on = True
-        self.running = False
-        self.debug = debug
+        self._on = True
+        self._running = False
+        self._debug = debug
 
         self._api_obj = api_obj
         self._tag = tag
+        self._interval = interval  # 3600000 ms = 1 hour
+
+        self._log_properties = log_properties
+
+    def _debug_print(self, content: str):
+        if self._debug:
+            print('dbg_' + self._tag + ' ' + datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') + '>', content)
 
     def current_time_millis(self):
         return int(round(time.time() * 1000))
 
+    def _log(self):
+        self._debug_print('logging start...')
+        self._api_obj.log(db_type=self._log_properties['db_type'],
+                          mode=self._log_properties['mode'],
+                          station=self._log_properties['station'],
+                          term=self._log_properties['term'])
+        self._debug_print('logging end.')
+
     def run(self):
         last_ms = self.current_time_millis()
         current_ms = 0
+        self._log()
 
-        print(self._tag, '> logging start...')
-        self._api_obj.log()
-        print(self._tag, '> logging end.')
-
-        while self.on:
+        while self._on:
             current_ms = self.current_time_millis()
 
-            if current_ms - last_ms > 3600000:
+            if current_ms - last_ms > self._interval:
                 last_ms = current_ms
-                print('logging start...')
-                self._api_obj.log()
-                print('logging end.')
+                self._log()
 
             time.sleep(0.001)
+
+    def start_logging(self):
+        self._debug_print('start logging pm from Airkorea API.')
+        if not self._on:
+            self._on = True
+        if not self._running:
+            self._running = True
+
+        self.start()
+
+    def pause(self):
+        self._running = False
+
+    def resume(self):
+        self._running = True
+
+    def stop(self):  # can't restart
+        self._on = False
+
+    def is_running(self):
+        return self._running
 
 
 class AbsCrawler(metaclass=ABCMeta):
@@ -191,7 +222,7 @@ class AbsCrawler(metaclass=ABCMeta):
     _driver = None
     _debug = False
 
-    def __init__(self, base_url, crawl_type='static', debug=False):
+    def __init__(self, base_url, tag='', crawl_type='static', debug=False):
         self._base_url = base_url
         self._debug = debug
 
@@ -200,9 +231,11 @@ class AbsCrawler(metaclass=ABCMeta):
         else:  # crawl_type == 'static'
             pass
 
-    def _debug_print(self, content):
+        self._tag = tag
+
+    def _debug_print(self, content: str):
         if self._debug:
-            print('dbg__', datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') + '>', content)
+            print('dbg_' + self._tag + ' ' + datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') + '>', content)
 
     def _init_driver(self):  # 드라이버와 옵션을 클래스화하여 싱글톤으로 만들면 좋을듯
         import os

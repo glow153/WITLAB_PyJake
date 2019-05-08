@@ -4,9 +4,9 @@ import datetime
 
 
 class SunAngleCrawler(AbsCrawler):
-    def __init__(self, crawl_type='dynamic', debug=False):
+    def __init__(self, debug=False):
         base_url = 'https://astro.kasi.re.kr/life/pageView/10'
-        super().__init__(base_url, crawl_type, debug)
+        super().__init__(base_url, 'dynamic', debug)
 
     def _make_url(self, **kwargs):
         try:

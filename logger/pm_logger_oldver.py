@@ -1,4 +1,4 @@
-from api.airkorea_pm_realtime import RealtimeParticulateMatter
+from api.oapi_airkorea_pm_realtime import RealtimeParticulateMatter
 import threading
 import time
 

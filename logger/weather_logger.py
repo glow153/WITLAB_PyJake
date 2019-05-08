@@ -1,4 +1,4 @@
-from api.openapi_weather import RealtimeKmaWeather
+from api.oapi_kma_localweather import RealtimeKmaWeather
 import threading
 import time
 

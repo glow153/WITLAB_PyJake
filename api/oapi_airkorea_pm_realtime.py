@@ -6,12 +6,11 @@ from abs_class import AbsApi
 
 
 class RealtimeParticulateMatter(AbsApi):
-    _json_dict = {}
     _data_dict = {}
     _pdf = None
     _spdf = None
 
-    def __init__(self, service_key: str, debug: bool = False):
+    def __init__(self, service_key: str, tag='', debug=False):
         """
         constructor.
         :param service_key: service key, :type: str
@@ -28,7 +27,7 @@ class RealtimeParticulateMatter(AbsApi):
         mysql_conn_param = ['root', 'defacto8*jj', 'localhost', 3306, 'pm_measure']
 
         super().__init__(base_url, service_key, column, hdfs_path,
-                         mysql_conn_param, debug=debug)
+                         mysql_conn_param, tag=tag, debug=debug)
 
     def _datetime_corrector(self, org_dh: str):
         """
@@ -68,7 +67,7 @@ class RealtimeParticulateMatter(AbsApi):
 
         return query_params
 
-    def _json2pdf(self, term):
+    def _json2pdf(self, **kwargs):
         param = self._json_dict['parm']
         data_list = self._json_dict['list']
 
@@ -109,7 +108,7 @@ class RealtimeParticulateMatter(AbsApi):
                    data['pm10Value'], data['pm25Value']]
             rawdata.append(row)
 
-        self.debug_print('debug> get data from api:' + str(rawdata))
+        self._debug_print('debug> get data from api:' + str(rawdata))
 
         # make pandas dataframe
         self._pdf = pd.DataFrame(rawdata)
@@ -117,39 +116,21 @@ class RealtimeParticulateMatter(AbsApi):
         # set new column name
         self._pdf.columns = self._column
 
-        if term == 'hourly':  # hourly data
+        if kwargs['term'] == 'hourly':  # hourly data
             self._pdf = self._pdf.sort_values(by=['datehour'], ascending=False).iloc[:1]
 
-    def parquet2csv_oldver(self, local_outfilepath):
-        outfile = open(local_outfilepath, 'w', encoding='utf-8', newline='')
-        csv_writer = csv.writer(outfile)
+    def log(self, db_type: list, mode='append', **kwargs):
+        # kwargs : {station='cheonan_all', term='daily'}
 
-        raw_colume_name = ['dataTime', 'pm10Value', 'pm25Value']
-        if os.path.getsize(local_outfilepath) > 0:
-            csv_writer.writerow(raw_colume_name)
-        lsData = self._data_dict['list']
-        lsData_rev = []
-        # reverse row list
-        for i in reversed(range(len(lsData))):
-            lsData_rev.append(lsData[i])
-
-        for item in lsData_rev:
-            row = []
-            for key in raw_colume_name:
-                row.append(item[key])
-            row[0] = self._datetime_corrector(row[0])
-            csv_writer.writerow(row)
-
-    def log(self, db_type: list, station='cheonan_all', term='daily', mode='append'):
-        if station == 'cheonan_all':
+        if kwargs['station'] == 'cheonan_all':
             station_list = self._station_list
         else:
-            station_list = station
+            station_list = kwargs['station']
 
         for _station in station_list:
-            query_params = self._make_query_param(station=_station, term=term)
+            query_params = self._make_query_param(station=_station, term=kwargs['term'])
             self._req_api(query_params)
-            self._json2pdf(term)
+            self._json2pdf(term=kwargs['term'])
             if 'hdfs' in db_type:
                 self.pdf2hdfs(mode=mode)
             if 'mysql' in db_type:
@@ -159,8 +140,8 @@ class RealtimeParticulateMatter(AbsApi):
 if __name__ == '__main__':
     key = 'zo2rUB1wM3I11GNZFDuB84l4C94PZjP6cEb4qEff%2B94h83%2Fihaj1JJS75%2Bm0uHdFCchJw7SyGE0HZgKiZDpq%2FA%3D%3D'
 
-    pm = RealtimeParticulateMatter(key)
-    pm.log(['hdfs', 'mysql'], station='cheonan_all', term='month', mode='append')
+    pm = RealtimeParticulateMatter(key, tag='RealTimePM_API', debug=True)
+    pm.log(['hdfs', 'mysql'], mode='append', station='cheonan_all', term='month')
 
     # normalize
     pm.normalize_parquet()

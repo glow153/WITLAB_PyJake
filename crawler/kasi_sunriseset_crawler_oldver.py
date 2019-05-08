@@ -40,7 +40,7 @@ class ScrapSunRiseSet:
             print('dbg>', date, sr, cul, ss)
 
         return [date, sr, cul, ss]
-        
+
     def make_dataset_csv(self, local_outfilepath, start_date, end_date, address):
         import csv
         from datetime import datetime, timedelta
@@ -49,7 +49,7 @@ class ScrapSunRiseSet:
         oneday = timedelta(days=1)
         sdt = datetime.strptime(start_date, '%Y-%m-%d')
         edt = datetime.strptime(end_date, '%Y-%m-%d')
-        
+
         # set module
         outfile = open(local_outfilepath, 'w', encoding='utf-8', newline='')
         csv_writer = csv.writer(outfile)
@@ -70,14 +70,13 @@ class ScrapSunRiseSet:
         from basemodule import PySparkManager
 
         pysparkmgr = PySparkManager()
-        srs = pysparkmgr.sc.textFile(local_infilepath)\
-                        .map(lambda s: s.split(","))\
-                        .map(lambda s: Row(datetime=s[0],
-                                           rise=s[1], culmination=s[2], set=s[3]))\
-                        .toDF()
+        srs = pysparkmgr.sc.textFile(local_infilepath) \
+            .map(lambda s: s.split(",")) \
+            .map(lambda s: Row(datetime=s[0], rise=s[1], culmination=s[2], set=s[3])) \
+            .toDF()
 
         srs.write.mode('overwrite').parquet(hdfs_outpath)
-        
+
     def close(self):
         if self.debug:
             print('dbg> close!')
