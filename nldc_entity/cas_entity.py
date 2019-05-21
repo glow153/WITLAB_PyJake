@@ -12,10 +12,10 @@ class CasEntity:
     """
 
     # categories
-    __measurement_conditions = {}
-    __results = {}
-    __general_information = {}
-    __data = {}
+    _measurement_conditions = {}
+    _results = {}
+    _general_information = {}
+    _sp_ird = {}
     __uv = {}
     valid = None  # 유효 플래그 (ISD 파일이 올바른 형식이고 mapping이 정상적이면 True)
     objDatetime = None  # 측정 시간 객체, str으로 반환 및 시간연산을 위해 쓰임
@@ -45,8 +45,6 @@ class CasEntity:
         if self.valid:
             self.__set_additional_data(alg='trapezoid')
             self.__set_uv_dict(alg='trapezoid')
-            self.objDatetime = datetime.datetime.strptime(
-                self.__general_information['Date'] + ' ' + self.__general_information['Time'], '%m/%d/%Y %I:%M:%S %p')
 
     def __map_data(self, file):
         """
@@ -93,21 +91,28 @@ class CasEntity:
                     continue
 
                 if category == 1:
-                    self.__measurement_conditions[key] = value
+                    self._measurement_conditions[key] = value
 
                 elif category == 2:
-                    self.__results[key] = value
+                    self._results[key] = value
 
                 elif category == 3:
-                    self.__general_information[key] = value
+                    self._general_information[key] = value
 
                 elif category == 4:
-                    self.__data[float(key)] = value
+                    self._sp_ird[float(key)] = value
 
                 else:  # type == 0
                     pass
 
             line = file.readline()
+
+        try:
+            self.objDatetime = datetime.datetime.strptime(
+                self._general_information['Date'] + ' ' + self._general_information['Time'],
+                '%m/%d/%Y %I:%M:%S %p')
+        except (ValueError, TypeError, Exception):
+            return False
 
         return True
 
@@ -124,15 +129,15 @@ class CasEntity:
         bird_narrow = self.get_ird(446, 477, alg=alg)
 
         if bird_vis == 0:
-            self.__results['swr'] = 0
-            self.__results['mwr'] = 0
-            self.__results['lwr'] = 0
-            self.__results['narr'] = 0
+            self._results['swr'] = 0
+            self._results['mwr'] = 0
+            self._results['lwr'] = 0
+            self._results['narr'] = 0
         else:
-            self.__results['swr'] = bird_sw / bird_vis
-            self.__results['mwr'] = bird_mw / bird_vis
-            self.__results['lwr'] = bird_lw / bird_vis
-            self.__results['narr'] = bird_narrow / bird_vis
+            self._results['swr'] = bird_sw / bird_vis
+            self._results['mwr'] = bird_mw / bird_vis
+            self._results['lwr'] = bird_lw / bird_vis
+            self._results['narr'] = bird_narrow / bird_vis
 
     def __set_uv_dict(self, alg='rect'):
         """
@@ -183,30 +188,32 @@ class CasEntity:
         # key type change code가 필요하다
         sp_ird = {}
         if str_key_type:
-            keyset = self.__data.keys()
+            keyset = self._sp_ird.keys()
             for key in keyset:
-                sp_ird[str(key).replace('.', '_')] = self.__data[key]
+                sp_ird[str(key).replace('.', '_')] = self._sp_ird[key]
 
         d = {}
         if category == 'measurement conditions':
-            d = self.__measurement_conditions
+            d = self._measurement_conditions
         elif category == 'results':
-            d = self.__results
+            d = self._results
         elif category == 'general information':
-            d = self.__general_information
-        elif category == 'data':
-            d = sp_ird if str_key_type else self.__data
+            d = self._general_information
+        elif category == 'sp_ird':
+            d = sp_ird if str_key_type else self._sp_ird
         elif category == 'uv':
             d = self.__uv
 
         elif category == 'all':
-            d = {self.get_datetime(True): {
-                'measurement conditions': self.__measurement_conditions,
-                'results': self.__results,
-                'general information': self.__general_information,
-                'data': sp_ird if str_key_type else self.__data,
-                'uv': self.__uv
-            }}
+            d = {'datetime': self.get_datetime(True),
+                 'data': {
+                    'measurement conditions': self._measurement_conditions,
+                    'results': self._results,
+                    'general information': self._general_information,
+                    'sp_ird': sp_ird if str_key_type else self._sp_ird,
+                    'uv': self.__uv
+                    }
+                 }
 
         if to_json:
             import json
@@ -220,20 +227,20 @@ class CasEntity:
         :param item: 광특성 이름 (ISD 파일에 나와있는 이름, uv와 파장비율 등은 상기 코드에 정의된 이름으로 써야함)
         :return: 광특성 값, :type: str
         """
-        keyset_mc = self.__measurement_conditions.keys()
-        keyset_re = self.__results.keys()
-        keyset_gi = self.__general_information.keys()
-        keyset_da = self.__data.keys()
+        keyset_mc = self._measurement_conditions.keys()
+        keyset_re = self._results.keys()
+        keyset_gi = self._general_information.keys()
+        keyset_da = self._sp_ird.keys()
         keyset_uv = self.__uv.keys()
 
         if item in keyset_mc:
-            return self.__measurement_conditions[item]
+            return self._measurement_conditions[item]
         elif item in keyset_re:
-            return self.__results[item]
+            return self._results[item]
         elif item in keyset_gi:
-            return self.__general_information[item]
+            return self._general_information[item]
         elif item in keyset_da:
-            return self.__data[item]
+            return self._sp_ird[item]
         elif item in keyset_uv:
             return self.__uv[item]
         else:
@@ -263,8 +270,8 @@ class CasEntity:
         :return: 파장 복사량(broadband irradiance),  :type: float
         """
         ird = 0
-        if self.__data:
-            wls = list(self.__data.keys())
+        if self._sp_ird:
+            wls = list(self._sp_ird.keys())
 
             # for debug
             # print(wls)
@@ -272,8 +279,8 @@ class CasEntity:
             for i in range(len(wls) - 2):
                 wll = float(wls[i])
                 wlr = float(wls[i+1])
-                irdl = self.__data[wll]
-                irdr = self.__data[wlr]
+                irdl = self._sp_ird[wll]
+                irdr = self._sp_ird[wlr]
 
                 if irdl < 0 or irdr < 0:  # filter noise (negative value)
                     continue
