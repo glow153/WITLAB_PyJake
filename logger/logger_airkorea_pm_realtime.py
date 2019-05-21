@@ -10,7 +10,7 @@ class RealtimePmLogger(AbsLogger):
 
 
 if __name__ == '__main__':
-    logging_properties = {'db_type': ['hdfs', 'mysql'],
+    logging_properties = {'db_type': ['hdfs'],
                           'mode': 'append',
                           'station': 'cheonan_all',
                           'term': 'hourly'}

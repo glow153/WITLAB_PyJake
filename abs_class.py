@@ -42,7 +42,12 @@ class AbsApi(metaclass=ABCMeta):
         pass
 
     def _req_api(self, query_param: str):
-        json_response = requests.get(self._base_url + query_param)
+        json_response = None
+        while not json_response:
+            try:
+                json_response = requests.get(self._base_url + query_param)
+            except Exception:
+                print('occurred Exception! @@@@@@@@@@@@@@@@@@@@@@@@@@@')
         self._json_dict = json.loads(json_response.text)
 
     @abstractmethod
