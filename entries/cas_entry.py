@@ -286,15 +286,15 @@ class CasEntity:
                     continue
 
                 if weight_func == 'ery':
-                    from nldc_entity.ref_func import erythemal_action_spectrum as eryf
+                    from entries.ref_func import erythemal_action_spectrum as eryf
                     weightl = eryf(wll)
                     weightr = eryf(wlr)
                 elif weight_func == 'vitd':
-                    from nldc_entity.ref_func import vitd_weight_func_interpolated as vitdf
+                    from entries.ref_func import vitd_weight_func_interpolated as vitdf
                     weightl = vitdf(wll)
                     weightr = vitdf(wlr)
                 elif weight_func == 'actinic_uv':
-                    from nldc_entity.ref_func import actinic_uv_weight_func as actuvf
+                    from entries.ref_func import actinic_uv_weight_func as actuvf
                     weightl = actuvf(wll)
                     weightr = actuvf(wlr)
                 else:
