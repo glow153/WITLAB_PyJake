@@ -2,7 +2,7 @@ import datetime
 import os
 
 
-class CasEntity:
+class CasEntry:
     """
     CAS 140 CT - 152 Spectrometer Measurement Data
     <용어 정리>
@@ -325,11 +325,11 @@ class CasEntity:
 if __name__ == '__main__':
     import pprint
     rootdir = 'D:/_nldw/20170412'
-    flist = CasEntity.search(rootdir)
+    flist = CasEntry.search(rootdir)
 
     for fname in flist:
         print('>>', fname)
-        entity = CasEntity(fname)
+        entity = CasEntry(fname)
         d = entity.get_category(category='all')
         pprint.pprint(d)
         break

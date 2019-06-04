@@ -2,7 +2,7 @@ import datetime
 import os
 
 
-class JazSpectralEntity:
+class JazSpectralEntry:
 
     # categories
     __sp_ird = {}
