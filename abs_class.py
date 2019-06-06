@@ -1,5 +1,6 @@
 from abc import (abstractmethod, ABCMeta)
 from basemodule import (PySparkManager, MysqlManager)
+from debug_module import DbgModule
 from selenium import webdriver
 
 import pandas as pd
@@ -23,12 +24,9 @@ class AbsApi(metaclass=ABCMeta):
         self._column = column_list
         self._hdfs_path = hdfs_path
         self._mysql_conn_args = mysql_conn_args
-        self._debug = debug
-        self._tag = tag
 
-    def _debug_print(self, content: str):
-        if self._debug:
-            print('dbg_' + self._tag + ' ' + datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') + '>', content)
+        if debug:
+            self._dbg = DbgModule(tag)
 
     @abstractmethod
     def _make_query_param(self, **kwargs):
@@ -46,9 +44,11 @@ class AbsApi(metaclass=ABCMeta):
         while not json_response:
             try:
                 json_response = requests.get(self._base_url + query_param)
+                self._json_dict = json.loads(json_response.text)
             except Exception:
-                print('occurred Exception! @@@@@@@@@@@@@@@@@@@@@@@@@@@')
-        self._json_dict = json.loads(json_response.text)
+                self._dbg.print_e('@@@@@@@@@@@@@@ occurred Exception! @@@@@@@@@@@@@@')
+                self._dbg.print_e('trying to recall api...')
+                continue
 
     @abstractmethod
     def _json2pdf(self, **kwargs):
@@ -73,7 +73,7 @@ class AbsApi(metaclass=ABCMeta):
         else:
             path = hdfs_path
 
-        self._debug_print('pdf -> parquet :: ' + str(list(self._pdf.iloc[0])))
+        self._dbg.print_p('pdf -> parquet :: ', str(list(self._pdf.iloc[0])))
 
         # make spark dataframe
         self._spdf = PySparkManager().sqlctxt.createDataFrame(self._pdf)
@@ -81,7 +81,7 @@ class AbsApi(metaclass=ABCMeta):
         # append new data
         self._spdf.write.mode(mode).parquet(path)
 
-        self._debug_print('parquet write completed.')
+        self._dbg.print_p('parquet write completed.')
 
     def pdf2mysql(self, table_name: str, if_exists: str = 'append'):
         """
@@ -90,7 +90,7 @@ class AbsApi(metaclass=ABCMeta):
         :param if_exists: to_sql() params, ex. 'append', 'replace', 'fail'
         :return: nothing
         """
-        self._debug_print('pdf -> mysql :: ' + str(list(self._pdf.iloc[0])))
+        self._dbg.print_p('pdf -> mysql :: ' + str(list(self._pdf.iloc[0])))
 
         # connect to mysql
         mm = MysqlManager()
@@ -102,7 +102,7 @@ class AbsApi(metaclass=ABCMeta):
         # db close
         mm.close()
 
-        self._debug_print('mysql write completed.')
+        self._dbg.print_p('mysql write completed.')
 
     def pdf2csv(self, out_path: str):
         """
@@ -163,28 +163,25 @@ class AbsLogger(threading.Thread, metaclass=ABCMeta):
 
         self._on = True
         self._running = False
-        self._debug = debug
-
         self._api_obj = api_obj
         self._tag = tag
         self._interval = interval  # 3600000 ms = 1 hour
 
         self._log_properties = log_properties
 
-    def _debug_print(self, content: str):
-        if self._debug:
-            print('dbg_' + self._tag + ' ' + datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') + '>', content)
+        if debug:
+            self._dbg = DbgModule(tag)
 
     def current_time_millis(self):
         return int(round(time.time() * 1000))
 
     def _log(self):
-        self._debug_print('logging start...')
+        self._dbg.print_p('logging start...')
         self._api_obj.log(db_type=self._log_properties['db_type'],
                           mode=self._log_properties['mode'],
                           station=self._log_properties['station'],
                           term=self._log_properties['term'])
-        self._debug_print('logging end.')
+        self._dbg.print_p('logging end.')
 
     def run(self):
         last_ms = self.current_time_millis()
@@ -201,7 +198,7 @@ class AbsLogger(threading.Thread, metaclass=ABCMeta):
             time.sleep(0.001)
 
     def start_logging(self):
-        self._debug_print('start logging pm from Airkorea API.')
+        self._dbg.print_p('start logging pm from Airkorea API.')
         if not self._on:
             self._on = True
         if not self._running:
@@ -227,7 +224,7 @@ class AbsCrawler(metaclass=ABCMeta):
     _driver = None
     _debug = False
 
-    def __init__(self, base_url, tag='', crawl_type='static', debug=False):
+    def __init__(self, base_url, tag, crawl_type='static', debug=False):
         self._base_url = base_url
         self._debug = debug
 
@@ -236,15 +233,12 @@ class AbsCrawler(metaclass=ABCMeta):
         else:  # crawl_type == 'static'
             pass
 
-        self._tag = tag
-
-    def _debug_print(self, content: str):
-        if self._debug:
-            print('dbg_' + self._tag + ' ' + datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') + '>', content)
+        if debug:
+            self._dbg = DbgModule(tag)
 
     def _init_driver(self):  # 드라이버와 옵션을 클래스화하여 싱글톤으로 만들면 좋을듯
         import os
-        self._debug_print('init driver...')
+        self._dbg.print_p('init driver...')
 
         chrome_driver_path = os.getcwd() + '/../driver/chromedriver'
         self._options = webdriver.ChromeOptions()
@@ -252,7 +246,7 @@ class AbsCrawler(metaclass=ABCMeta):
         self._options.add_argument('disable-gpu')
         self._driver = webdriver.Chrome(chrome_driver_path, options=self._options)
 
-        self._debug_print('driver init completed.')
+        self._dbg.print_p('driver init completed.')
 
     @abstractmethod
     def _make_url(self, **kwargs):
@@ -264,7 +258,7 @@ class AbsCrawler(metaclass=ABCMeta):
 
     # kwargs: {username, passwd, host, db_name, table_name}
     def to_db(self, pdf: pd.DataFrame, db_type='mysql', **kwargs):
-        self._debug_print('db type : ' + db_type)
+        self._dbg.print_p('db type : ' + db_type)
         if db_type == 'mysql':
             from sqlalchemy import create_engine
             args = (kwargs['username'], kwargs['passwd'], kwargs['host'], kwargs['port'], kwargs['db_name'])
@@ -275,8 +269,8 @@ class AbsCrawler(metaclass=ABCMeta):
             pdf.to_sql(name=kwargs['table_name'], con=engine, if_exists='append', index=False)
 
     def close(self):
-        self._debug_print('driver closing...')
+        self._dbg.print_p('driver closing...')
         self._driver.close()
-        self._debug_print('driver closed.')
+        self._dbg.print_p('driver closed.')
 
 

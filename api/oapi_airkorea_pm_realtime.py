@@ -108,7 +108,7 @@ class RealtimeParticulateMatter(AbsApi):
                    data['pm10Value'], data['pm25Value']]
             rawdata.append(row)
 
-        self._debug_print('debug> get data from api:' + str(rawdata))
+        self._dbg.print_p('get data from api:', str(rawdata))
 
         # make pandas dataframe
         self._pdf = pd.DataFrame(rawdata)
@@ -141,7 +141,7 @@ if __name__ == '__main__':
     key = 'zo2rUB1wM3I11GNZFDuB84l4C94PZjP6cEb4qEff%2B94h83%2Fihaj1JJS75%2Bm0uHdFCchJw7SyGE0HZgKiZDpq%2FA%3D%3D'
 
     pm = RealtimeParticulateMatter(key, tag='RealTimePM_API', debug=True)
-    pm.log(['hdfs'], mode='append', station='cheonan_all', term='month')
+    pm.log(['hdfs'], mode='append', station='cheonan_all', term='daily')
 
     # normalize
     pm.normalize_parquet()
