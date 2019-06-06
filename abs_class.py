@@ -25,8 +25,7 @@ class AbsApi(metaclass=ABCMeta):
         self._hdfs_path = hdfs_path
         self._mysql_conn_args = mysql_conn_args
 
-        if debug:
-            self._dbg = DbgModule(tag)
+        self._dbg = DbgModule(debug, tag)
 
     @abstractmethod
     def _make_query_param(self, **kwargs):
@@ -135,7 +134,7 @@ class AbsApi(metaclass=ABCMeta):
         else:  # specific path
             path = hdfs_path
 
-        spdf = PySparkManager().sqlctxt.read.parquet(path).cache()
+        spdf = PySparkManager().sqlctxt.read.parquet(path)
         spdf_new = spdf.distinct().sort('station', 'datehour').cache()
         spdf_new.write.mode('overwrite').parquet(path)
 
@@ -169,8 +168,7 @@ class AbsLogger(threading.Thread, metaclass=ABCMeta):
 
         self._log_properties = log_properties
 
-        if debug:
-            self._dbg = DbgModule(tag)
+        self._dbg = DbgModule(debug, tag)
 
     def current_time_millis(self):
         return int(round(time.time() * 1000))
@@ -233,8 +231,7 @@ class AbsCrawler(metaclass=ABCMeta):
         else:  # crawl_type == 'static'
             pass
 
-        if debug:
-            self._dbg = DbgModule(tag)
+        self._dbg = DbgModule(debug, tag)
 
     def _init_driver(self):  # 드라이버와 옵션을 클래스화하여 싱글톤으로 만들면 좋을듯
         import os

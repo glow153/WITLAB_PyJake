@@ -3,22 +3,20 @@ import requests
 import datetime
 import csv
 import pandas as pd
-from basemodule import PySparkManager
+from abs_class import AbsApi
 
 
-class RealtimeKmaWeather:
-    _json_dict = {}
-    _pdf = None
-
-    def __init__(self, service_key, debug=False):
-        self._base_url = 'http://newsky2.kma.go.kr/service/SecndSrtpdFrcstInfoService2/' \
+class RealtimeKmaWeather(AbsApi):
+    def __init__(self, service_key, tag, debug=False):
+        base_url = 'http://newsky2.kma.go.kr/service/SecndSrtpdFrcstInfoService2/' \
                          'ForecastSpaceData'
-        self._column = ['station', 'datehour', 'POP', 'PTY', 'R06', 'REH', 'S06', 'SKY',
+        column = ['station', 'datehour', 'POP', 'PTY', 'R06', 'REH', 'S06', 'SKY',
                         'T3H', 'UUU', 'VEC', 'VVV', 'WSD']
-        self._hdfs_spdf_path = 'hdfs:///weather/kma/weather.parquet'
+        hdfs_path = 'hdfs:///weather/kma/weather.parquet'
+        mysql_conn_param = []  # to be continued...
 
-        self._service_key = service_key
-        self.debug = debug
+        super().__init__(base_url, service_key, column, hdfs_path,
+                         mysql_conn_param, tag=tag, debug=debug)
 
     def _replace_last_basedt(self, ctime):
         h = ctime.hour
@@ -37,7 +35,7 @@ class RealtimeKmaWeather:
     def _replace_malencoded_str(self, s):
         return
 
-    def _get_localweather_coord(self, location='충청남도 천안시서북구 부성동'):  # 형식 : '시군구 시도 동면읍'
+    def _get_localweather_coord(self, station='충청남도 천안시서북구 부성동'):  # 형식 : '시군구 시도 동면읍'
         top_url = 'http://www.kma.go.kr/DFSROOT/POINT/DATA/top'
         mdl_url = 'http://www.kma.go.kr/DFSROOT/POINT/DATA/mdl'
         leaf_url = 'http://www.kma.go.kr/DFSROOT/POINT/DATA/leaf'
@@ -52,7 +50,7 @@ class RealtimeKmaWeather:
             dict_top[item['value']] = item['code']
 
         # mdl
-        res2 = requests.get(mdl_url + '.' + dict_top[location.split()[0]] + tail)
+        res2 = requests.get(mdl_url + '.' + dict_top[station.split()[0]] + tail)
         res2.encoding = 'utf-8'  # MUST DO IT!!!
         json_mdl = json.loads(res2.text)
         dict_mdl = {}
@@ -60,43 +58,55 @@ class RealtimeKmaWeather:
             dict_mdl[item['value']] = item['code']
 
         # leaf
-        res3 = requests.get(leaf_url + '.' + dict_mdl[location.split()[1]] + tail)
+        res3 = requests.get(leaf_url + '.' + dict_mdl[station.split()[1]] + tail)
         res3.encoding = 'utf-8'  # MUST DO IT!!!
         json_leaf = json.loads(res3.text)
         dict_leaf = {}
         for item in json_leaf:
             dict_leaf[item['value']] = [item['x'], item['y']]
 
-        coord = dict_leaf[location.split()[2]]
+        coord = dict_leaf[station.split()[2]]
         print(coord)
         return coord[0], coord[1]
 
-    def req_api(self, base_dt, location='충청남도 천안시서북구 부성동'):
-        sadt = base_dt.split(' ')
+    def _make_query_param(self, **kwargs):
+        if 'station' in kwargs.keys():
+            station = kwargs['station']
+        else:
+            station = '충청남도 천안시서북구 부성동'
 
-        nx, ny = self._get_localweather_coord(location)
+        if 'base_dt' in kwargs.keys():
+            sadt = kwargs['base_dt'].split(' ')
+        else:
+            # 현재 시간으로부터 가장 최근의 예보시각을 datetime 객체로 가져옴
+            obj_basedt = self._replace_last_basedt(datetime.datetime.now())
+            # 객체를 API에 맞는 형식문자열로 변환
+            sadt = self._change_dt_strfmt(obj_basedt).split(' ')
 
-        url = self._base_url + '?serviceKey=' + self._service_key \
-                             + '&base_date=' + sadt[0] \
-                             + '&base_time=' + sadt[1] \
-                             + '&nx=' + nx \
-                             + '&ny=' + ny \
-                             + '&numOfRows=20&_type=json'
+        # 주소 문자열을 토대로 기상청 동네예보 좌표를 구함
+        nx, ny = self._get_localweather_coord(station)
 
-        self._json_dict = json.loads(requests.get(url).text, encoding='utf-8')
-        if self.debug:
-            print('url:', url)
-            print('response:', self._json_dict)
+        query_params = '?serviceKey=' + self._service_key \
+                       + '&base_date=' + sadt[0] \
+                       + '&base_time=' + sadt[1] \
+                       + '&nx=' + nx \
+                       + '&ny=' + ny \
+                       + '&numOfRows=20&_type=json'
 
-    def _json2pdf(self, station='충청남도 천안시서북구 부성동'):
+        return query_params
+
+    def _json2pdf(self, station):
+        """
+        최근 1개 발표 데이터만 가져오게끔 구성됨
+        :param station:
+        :return:
+        """
         wdata = self._json_dict['response']['body']['items']['item']
         obj_baseDt = self._replace_last_basedt(datetime.datetime.now())
         obj_fcstDt = obj_baseDt + datetime.timedelta(hours=4)
 
-        baseDate = obj_baseDt.strftime('%Y%m%d')
-        baseTime = obj_baseDt.strftime('%H00')
-        fcstDate = obj_fcstDt.strftime('%Y%m%d')
-        fcstTime = obj_fcstDt.strftime('%H00')
+        baseDate, baseTime = self._change_dt_strfmt(obj_baseDt).split(' ')
+        fcstDate, fcstTime = self._change_dt_strfmt(obj_fcstDt).split(' ')
 
         # make dict for one measurement
         tmpdict = {}
@@ -117,41 +127,29 @@ class RealtimeKmaWeather:
         tmpdict['datehour'] = [obj_fcstDt.strftime('%Y-%m-%d %H')]
         self._pdf = pd.DataFrame(tmpdict)
 
-        if self.debug:
-            print(self._pdf)
+        self._dbg.print_p(self._pdf)
 
-    def _pdf2parquet(self, hdfs_path='', mode='append'):
-        print('>>', datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), 'api data:', list(self._pdf.iloc[0]))
-        self._spdf = PySparkManager().sqlctxt.createDataFrame(self._pdf)  # make spark dataframe
-
-        if hdfs_path == '':  # to default location
-            self._spdf.write.mode(mode).parquet(self._hdfs_spdf_path)  # append new data to old parquet
+    def log(self, db_type, mode='append', **kwargs):
+        if 'station' in kwargs.keys():
+            station = kwargs['station']
         else:
-            self._spdf.write.mode(mode).parquet(hdfs_path)  # append new data to old parquet
+            station = '충청남도 천안시서북구 부성동'
 
-    def log(self, location='충청남도 천안시서북구 부성동', hdfs_path='', mode='append'):
-        obj_basedt = self._replace_last_basedt(datetime.datetime.now())
-        basedt = self._change_dt_strfmt(obj_basedt)
-        self.req_api(basedt, location=location)
-        self._json2pdf()
-        self._pdf2parquet(hdfs_path=hdfs_path, mode=mode)
-
-    def weather_daemon(self, outfilepath):
-        toggle = True
-        while True:
-            ctime = datetime.datetime.now()
-            if (ctime.hour + 1) % 3 == 0:
-                if toggle:
-                    self.log(outfilepath)
-                    toggle = False
-            else:
-                toggle = True
+        query_param = self._make_query_param(station=station)
+        self._req_api(query_param)
+        self._json2pdf(station)
+        if 'hdfs' in db_type:
+            self.pdf2hdfs(hdfs_path=self._hdfs_path, mode=mode)
+        if 'mysql' in db_type:
+            pass  # to be continued...
 
 
 if __name__ == '__main__':
     key = '8Op%2FMD5uSP4m2OZ8SYn43FH%2FRpEH8BBW7dnwU1zUqG%2BAuAnfH6oYADIASnGxh7P9%2BH8dzRFGxHl9vRY%2FFwSDvw%3D%3D'
-    outfilepath = '/home/witlab/weather_logdata.csv'
 
-    weather = RealtimeKmaWeather(key, True)
-    # weather.log()
-    weather._get_localweather_coord()
+    weather = RealtimeKmaWeather(key, tag='RealtimeKmaWeather_API', debug=True)
+    weather.log(['hdfs'], mode='append', station='충청남도 천안시서북구 부성동')
+
+    # normalize
+    weather.normalize_parquet()
+

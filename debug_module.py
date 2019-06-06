@@ -3,18 +3,20 @@ import sys
 
 
 class DbgModule:
-    def __init__(self, tag):
+    def __init__(self, tf=True, tag=''):
+        self._tf = tf
         self._tag = tag
-        pass
+
+        self._header = 'dbg_' + self._tag + ' ' + self._timestamp() + '>>'
 
     def _timestamp(self):
         return datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
     def print_p(self, *content):
-        header = 'dbg_' + self._tag + ' ' + self._timestamp() + '>>'
-        print(header, *content)
+        if self._tf:
+            print(self._header, *content)
 
     def print_e(self, *content):
-        header = 'dbg_' + self._tag + ' ' + self._timestamp() + '>>'
-        print(header, *content, file=sys.stderr)
+        if self._tf:
+            print(self._header, *content, file=sys.stderr)
 
