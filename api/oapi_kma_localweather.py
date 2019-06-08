@@ -18,7 +18,7 @@ class RealtimeKmaWeather(AbsApi):
         super().__init__(base_url, service_key, column, hdfs_path,
                          mysql_conn_param, tag=tag, debug=debug)
 
-    def _replace_last_basedt(self, ctime):
+    def get_last_basedt(self, ctime):
         h = ctime.hour
 
         if h < 2:
@@ -27,10 +27,12 @@ class RealtimeKmaWeather(AbsApi):
         else:
             ctime = ctime.replace(hour=(h - ((h + 1) % 3)))
 
+        ctime.replace(minute=15)
+
         return ctime
 
     def _change_dt_strfmt(self, ctime):
-        return ctime.strftime('%Y%m%d %H00')
+        return ctime.strftime('%Y%m%d %H%M')
 
     def _replace_malencoded_str(self, s):
         return
@@ -66,7 +68,7 @@ class RealtimeKmaWeather(AbsApi):
             dict_leaf[item['value']] = [item['x'], item['y']]
 
         coord = dict_leaf[station.split()[2]]
-        print(coord)
+        self._dbg.print_p('kma coord:', coord)
         return coord[0], coord[1]
 
     def _make_query_param(self, **kwargs):
@@ -79,7 +81,7 @@ class RealtimeKmaWeather(AbsApi):
             sadt = kwargs['base_dt'].split(' ')
         else:
             # 현재 시간으로부터 가장 최근의 예보시각을 datetime 객체로 가져옴
-            obj_basedt = self._replace_last_basedt(datetime.datetime.now())
+            obj_basedt = self.get_last_basedt(datetime.datetime.now())
             # 객체를 API에 맞는 형식문자열로 변환
             sadt = self._change_dt_strfmt(obj_basedt).split(' ')
 
@@ -102,7 +104,7 @@ class RealtimeKmaWeather(AbsApi):
         :return:
         """
         wdata = self._json_dict['response']['body']['items']['item']
-        obj_baseDt = self._replace_last_basedt(datetime.datetime.now())
+        obj_baseDt = self.get_last_basedt(datetime.datetime.now())
         obj_fcstDt = obj_baseDt + datetime.timedelta(hours=4)
 
         baseDate, baseTime = self._change_dt_strfmt(obj_baseDt).split(' ')
@@ -127,7 +129,11 @@ class RealtimeKmaWeather(AbsApi):
         tmpdict['datehour'] = [obj_fcstDt.strftime('%Y-%m-%d %H')]
         self._pdf = pd.DataFrame(tmpdict)
 
-        self._dbg.print_p(self._pdf)
+        # 190606 issue
+        # R06, S06이 문자열과 실수값 모두 가지면서 dataframe이 읽히지 않는 문제
+        # 해결방안 : 해당 행을 drop
+        self._pdf = self._pdf.drop(['R06', 'S06'], axis=1)
+        self._dbg.print_p('pdf =>', self._pdf.to_string)
 
     def log(self, db_type, mode='append', **kwargs):
         if 'station' in kwargs.keys():
@@ -148,8 +154,12 @@ if __name__ == '__main__':
     key = '8Op%2FMD5uSP4m2OZ8SYn43FH%2FRpEH8BBW7dnwU1zUqG%2BAuAnfH6oYADIASnGxh7P9%2BH8dzRFGxHl9vRY%2FFwSDvw%3D%3D'
 
     weather = RealtimeKmaWeather(key, tag='RealtimeKmaWeather_API', debug=True)
-    weather.log(['hdfs'], mode='append', station='충청남도 천안시서북구 부성동')
+    # weather.log(['hdfs'], mode='append', station='충청남도 천안시서북구 부성동')
+    station = '충청남도 천안시서북구 부성동'
+    query_param = weather._make_query_param(station=station)
+    weather._req_api(query_param)
+    weather._json2pdf(station)
 
     # normalize
-    weather.normalize_parquet()
+    # weather.normalize_parquet()
 

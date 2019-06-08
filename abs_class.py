@@ -43,6 +43,7 @@ class AbsApi(metaclass=ABCMeta):
         while not json_response:
             try:
                 json_response = requests.get(self._base_url + query_param)
+                self._dbg.print_p('req get :', self._base_url + query_param)
                 self._json_dict = json.loads(json_response.text)
             except Exception:
                 self._dbg.print_e('@@@@@@@@@@@@@@ occurred Exception! @@@@@@@@@@@@@@')
@@ -157,6 +158,13 @@ class AbsApi(metaclass=ABCMeta):
 
 
 class AbsLogger(threading.Thread, metaclass=ABCMeta):
+    """
+    수정 필요
+        1. 인터벌을 초단위로 설정할 수 있도록 변경
+        2. 요청 시도를 하기 전 대기 상태 처리
+           - 현재 방법도 요청에 따라 시간이 밀리지 않아 좋음
+           - 여러 종류를 사용할 때 쓰레드 사용이 오버헤드가 많아질 수도 있겠다... -> 스케줄러 사용
+    """
     def __init__(self, api_obj, tag, interval=3600000, debug=False, **log_properties):
         threading.Thread.__init__(self)
 
@@ -196,7 +204,7 @@ class AbsLogger(threading.Thread, metaclass=ABCMeta):
             time.sleep(0.001)
 
     def start_logging(self):
-        self._dbg.print_p('start logging pm from Airkorea API.')
+        self._dbg.print_p('start logging thread.')
         if not self._on:
             self._on = True
         if not self._running:
