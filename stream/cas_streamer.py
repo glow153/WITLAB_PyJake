@@ -1,6 +1,6 @@
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
-from entries.cas_entry import CasEntity
+from entries.cas_entry import CasEntry
 from kafka import KafkaProducer
 import time
 
@@ -17,14 +17,14 @@ class MyEventHandler(FileSystemEventHandler):
         # TODO: send nl entity to server
         if event.event_type == 'created':
             time.sleep(1)  # for waiting for creating completed
-            entity = CasEntity(event.src_path)
+            entity = CasEntry(event.src_path)
             print('send>>', entity.get_category())
             self.kafka_producer.send('natural_light_entity', b'send entity')
         else:
             pass
 
 
-class NLEntityStreamer:
+class NLEntryStreamer:
     def __init__(self):
         self.remote_dirpath = '/home/witlab/tmp'
 
@@ -45,5 +45,5 @@ class NLEntityStreamer:
 
 
 if __name__ == "__main__":
-    NLEntityStreamer().start_streaming()
+    NLEntryStreamer().start_streaming()
 

@@ -11,7 +11,7 @@ class RealtimeKmaWeather(AbsApi):
         base_url = 'http://newsky2.kma.go.kr/service/SecndSrtpdFrcstInfoService2/' \
                          'ForecastSpaceData'
         column = ['station', 'datehour', 'POP', 'PTY', 'R06', 'REH', 'S06', 'SKY',
-                        'T3H', 'UUU', 'VEC', 'VVV', 'WSD']
+                  'T3H', 'UUU', 'VEC', 'VVV', 'WSD']
         hdfs_path = 'hdfs:///weather/kma/weather.parquet'
         mysql_conn_param = []  # to be continued...
 

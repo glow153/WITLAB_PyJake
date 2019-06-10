@@ -1,6 +1,6 @@
 import happybase
 import pprint
-from nldc_entity.cas_entity import CasEntity
+from entries.cas_entry import CasEntry
 
 
 class HappybaseManager:
@@ -21,14 +21,14 @@ class HappybaseManager:
         self._hb_conn.close()
 
     def _getmerge_nle_hbrow(self, datedir):  # insert를 위한 메소드, isd파일 들어있는 폴더를 HBase row 형태로 변환
-        flist = CasEntity.search(datedir)
+        flist = CasEntry.search(datedir)
         dict_merged_sp = {}
 
         # make list and dict
         for fname in flist:
 
             # get nl entity obj
-            nle = CasEntity(fname)
+            nle = CasEntry(fname)
 
             try:
                 datetime = nle.get_datetime(tostr=True)[:-3].replace(':', '')
