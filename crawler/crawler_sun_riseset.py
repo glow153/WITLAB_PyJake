@@ -8,24 +8,33 @@ from basemodule import PySparkManager
 class SunRiseSetCrawler(AbsCrawler):
     def __init__(self, debug=False):
         base_url = 'https://astro.kasi.re.kr/life/pageView/9'
-        super().__init__(base_url, crawl_type='dynamic', debug=debug)
+        super().__init__(base_url, tag='SunRiseSetCrawler', crawl_type='dynamic', debug=debug)
+
+    def print_usage(self):
+        print('필수항목 : lat=(위도)&lon=(경도)&date=(날짜)')
 
     def _make_url(self, **kwargs):
+        return self._base_url + '?' \
+               + 'lat=' + kwargs['lat'] \
+               + '&lon=' + kwargs['lon'] \
+               + '&date=' + kwargs['date']
+
+    def scrap(self, **kwargs):
         try:
             date = str(kwargs['date'])
         except KeyError:  # set today
             date = datetime.now().strftime('%Y-%m-%d')
+            kwargs['date'] = date
 
         try:
-            address = str(kwargs['address'])
+            lat, lon = str(kwargs['lat']), str(kwargs['lon'])
         except KeyError:  # witlab
-            address = '충남+천안시+서북구+천안대로+1223-24'
+            lat, lon = '36.8523', '127.1510'
+            kwargs['lat'] = lat
+            kwargs['lon'] = lon
 
-        return self._base_url + '?date=' + date + '&address=' + address
-
-    def scrap(self, **kwargs):
         url = self._make_url(**kwargs)
-        self._debug_print('request url :' + url)
+        self._dbg.print_p('request url :' + url)
         self._driver.get(url)
         soup = BeautifulSoup(self._driver.page_source, 'html.parser')
 
@@ -37,7 +46,7 @@ class SunRiseSetCrawler(AbsCrawler):
         cul = culmination[0:2] + ':' + culmination[4:-1]
         ss = sunset[0:2] + ':' + sunset[4:-1]
 
-        self._debug_print(str(kwargs['date']) + ':%s %s %s' % (sr, cul, ss))
+        self._dbg.print_p(date, lat, lon, ': %s %s %s' % (sr, cul, ss))
 
         return [kwargs['date'], sr, cul, ss]
 
@@ -79,7 +88,7 @@ class SunRiseSetCrawler(AbsCrawler):
 
 if __name__ == '__main__':
     src = SunRiseSetCrawler(True)
-    r = src.scrap(date='2019-05-03')
+    r = src.scrap()
     print(r)
     src.close()
 

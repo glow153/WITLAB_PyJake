@@ -6,7 +6,7 @@ import datetime
 class SunAngleCrawler(AbsCrawler):
     def __init__(self, debug=False):
         base_url = 'https://astro.kasi.re.kr/life/pageView/10'
-        super().__init__(base_url, 'dynamic', debug)
+        super().__init__(base_url, tag='SunRiseSetCrawler', debug=debug)
 
     def _make_url(self, **kwargs):
         try:
@@ -31,10 +31,10 @@ class SunAngleCrawler(AbsCrawler):
 
     def scrap(self, **kwargs):
         url = self._make_url(**kwargs)
-        self._debug_print('request url: ' + url)
+        self._dbg.print_p('request url: ' + url)
         self._driver.get(url)
         soup = BeautifulSoup(self._driver.page_source, 'lxml-xml')
-        self._debug_print('response received. parsing...')
+        self._dbg.print_p('response received. parsing...')
         table_list = []
 
         if kwargs['term'] == 'hourly':

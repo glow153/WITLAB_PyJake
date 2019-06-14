@@ -16,7 +16,7 @@ class CasEntry:
     _results = {}
     _general_information = {}
     _sp_ird = {}
-    __uv = {}
+    _uv = {}
     valid = None  # 유효 플래그 (ISD 파일이 올바른 형식이고 mapping이 정상적이면 True)
     objDatetime = None  # 측정 시간 객체, str으로 반환 및 시간연산을 위해 쓰임
 
@@ -33,20 +33,36 @@ class CasEntry:
         :param debug: ISD parsing debug mode, :type: bool
         """
 
+        # 1. ISD 파일 읽기
         try:
             isdfile = open(fname, 'rt', encoding='utf-8', errors='ignore')
         except (FileNotFoundError, PermissionError):
             self.valid = False
             return
 
-        self.valid = self.__map_data(isdfile)
+        # 2. mapping
+        self.valid = self._map_data(isdfile)
+
+        # 3. ISD 파일 닫기
         isdfile.close()
 
         if self.valid:
-            self.__set_additional_data(alg='trapezoid')
-            self.__set_uv_dict(alg='trapezoid')
+            # 4. 파장비율 계산
+            self._set_additional_data(alg='trapezoid')
 
-    def __map_data(self, file):
+            # 5. uv 계산
+            self._set_uv_dict(alg='trapezoid')
+
+            # 6. 측정 시간 객체 생성
+            try:
+                self.objDatetime = datetime.datetime.strptime(
+                    self._general_information['Date'] + ' ' + self._general_information['Time'],
+                    '%m/%d/%Y %I:%M:%S %p')
+            except (ValueError, TypeError, Exception):
+                self.valid = False
+                return
+
+    def _map_data(self, file):
         """
         ISD 파일을 읽고 element를 category 별 dictionary에 mapping함
         :param file: ISD 파일 객체
@@ -107,16 +123,9 @@ class CasEntry:
 
             line = file.readline()
 
-        try:
-            self.objDatetime = datetime.datetime.strptime(
-                self._general_information['Date'] + ' ' + self._general_information['Time'],
-                '%m/%d/%Y %I:%M:%S %p')
-        except (ValueError, TypeError, Exception):
-            return False
-
         return True
 
-    def __set_additional_data(self, alg='rect'):
+    def _set_additional_data(self, alg='rect'):
         """
         파장비율 계산
         :param alg: 적분 알고리즘 선택, 'rect': 직사각형 공식, 'trapezoid': 사다리꼴 공식
@@ -139,29 +148,29 @@ class CasEntry:
             self._results['lwr'] = bird_lw / bird_vis
             self._results['narr'] = bird_narrow / bird_vis
 
-    def __set_uv_dict(self, alg='rect'):
+    def _set_uv_dict(self, alg='rect'):
         """
         uv 계산
         :param alg: 적분 알고리즘 선택, 'rect': 직사각형 공식, 'trapezoid': 사다리꼴 공식
         :return:
         """
-        self.__uv['tuv'] = self.get_ird(280, 400, alg=alg)
-        self.__uv['uva'] = self.get_ird(315, 400, alg=alg)
-        self.__uv['uvb'] = self.get_ird(280, 315, alg=alg)
-        self.__uv['euv'] = self.get_ird(280, 400, weight_func='ery', alg=alg)
-        self.__uv['euva'] = self.get_ird(315, 400, weight_func='ery', alg=alg)
-        self.__uv['euvb'] = self.get_ird(280, 315, weight_func='ery', alg=alg)
-        self.__uv['uvi'] = self.__uv['euv'] * 40
-        self.__uv['duv'] = self.get_ird(280, 400, weight_func='vitd', alg=alg)
+        self._uv['tuv'] = self.get_ird(280, 400, alg=alg)
+        self._uv['uva'] = self.get_ird(315, 400, alg=alg)
+        self._uv['uvb'] = self.get_ird(280, 315, alg=alg)
+        self._uv['euv'] = self.get_ird(280, 400, weight_func='ery', alg=alg)
+        self._uv['euva'] = self.get_ird(315, 400, weight_func='ery', alg=alg)
+        self._uv['euvb'] = self.get_ird(280, 315, weight_func='ery', alg=alg)
+        self._uv['uvi'] = self._uv['euv'] * 40
+        self._uv['duv'] = self.get_ird(280, 400, weight_func='vitd', alg=alg)
 
-        if self.__uv['euv'] == 0:
-            self.__uv['euva_ratio'] = 0
-            self.__uv['euvb_ratio'] = 0
+        if self._uv['euv'] == 0:
+            self._uv['euva_ratio'] = 0
+            self._uv['euvb_ratio'] = 0
         else:
-            self.__uv['euva_ratio'] = self.__uv['euva'] / self.__uv['euv']
-            self.__uv['euvb_ratio'] = self.__uv['euvb'] / self.__uv['euv']
+            self._uv['euva_ratio'] = self._uv['euva'] / self._uv['euv']
+            self._uv['euvb_ratio'] = self._uv['euvb'] / self._uv['euv']
 
-        self.__uv['auv'] = self.get_ird(200, 400, weight_func='actinic_uv', alg=alg)
+        self._uv['auv'] = self.get_ird(200, 400, weight_func='actinic_uv', alg=alg)
 
     def get_datetime(self, tostr=False):
         """
@@ -202,7 +211,7 @@ class CasEntry:
         elif category == 'sp_ird':
             d = sp_ird if str_key_type else self._sp_ird
         elif category == 'uv':
-            d = self.__uv
+            d = self._uv
 
         elif category == 'all':
             d = {'datetime': self.get_datetime(True),
@@ -211,7 +220,7 @@ class CasEntry:
                     'results': self._results,
                     'general information': self._general_information,
                     'sp_ird': sp_ird if str_key_type else self._sp_ird,
-                    'uv': self.__uv
+                    'uv': self._uv
                     }
                  }
 
@@ -231,7 +240,7 @@ class CasEntry:
         keyset_re = self._results.keys()
         keyset_gi = self._general_information.keys()
         keyset_da = self._sp_ird.keys()
-        keyset_uv = self.__uv.keys()
+        keyset_uv = self._uv.keys()
 
         if item in keyset_mc:
             return self._measurement_conditions[item]
@@ -242,7 +251,7 @@ class CasEntry:
         elif item in keyset_da:
             return self._sp_ird[item]
         elif item in keyset_uv:
-            return self.__uv[item]
+            return self._uv[item]
         else:
             return None
 

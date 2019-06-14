@@ -45,8 +45,8 @@ class AbsApi(metaclass=ABCMeta):
                 json_response = requests.get(self._base_url + query_param)
                 self._dbg.print_p('req get :', self._base_url + query_param)
                 self._json_dict = json.loads(json_response.text)
-            except Exception:
-                self._dbg.print_e('@@@@@@@@@@@@@@ occurred Exception! @@@@@@@@@@@@@@')
+            except Exception as e:
+                self._dbg.print_e('@@@@@@@@@@@@@@ occurred Exception!', e.__class__.__name__, '@@@@@@@@@@@@@@')
                 self._dbg.print_e('trying to recall api...')
                 continue
 
@@ -63,7 +63,7 @@ class AbsApi(metaclass=ABCMeta):
 
     def pdf2hdfs(self, mode='append', hdfs_path=''):
         """
-        parquet 형식으로 저장
+        hdfs에 parquet 형식으로 저장
         :param mode: 저장 방식, 'append', 'overwrite'
         :param hdfs_path: hdfs 경로 지정, 입력 없으면 기본 저장경로
         :return: nothing
@@ -135,8 +135,11 @@ class AbsApi(metaclass=ABCMeta):
         else:  # specific path
             path = hdfs_path
 
+        self._dbg.print_p('normalizing: read parquet from hdfs...')
         spdf = PySparkManager().sqlctxt.read.parquet(path)
+        self._dbg.print_p('normalizing: remove coupled rows...')
         spdf_new = spdf.distinct().sort('station', 'datehour').cache()
+        self._dbg.print_p('normalizing: write parquet...')
         spdf_new.write.mode('overwrite').parquet(path)
 
     def get_last_log_datehour(self, db='hdfs'):
@@ -232,14 +235,12 @@ class AbsCrawler(metaclass=ABCMeta):
 
     def __init__(self, base_url, tag, crawl_type='static', debug=False):
         self._base_url = base_url
-        self._debug = debug
+        self._dbg = DbgModule(debug, tag)
 
         if crawl_type == 'dynamic':
             self._init_driver()
         else:  # crawl_type == 'static'
             pass
-
-        self._dbg = DbgModule(debug, tag)
 
     def _init_driver(self):  # 드라이버와 옵션을 클래스화하여 싱글톤으로 만들면 좋을듯
         import os

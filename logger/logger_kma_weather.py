@@ -22,6 +22,7 @@ class RealtimeKmaWeatherLogger(AbsLogger):
             next_base_str = dt_next_base.strftime('%H:%M')
             now_str = datetime.datetime.now().strftime('%H:%M')
 
+            self._dbg.print_e('compare time str:', next_base_str, now_str)
             if next_base_str == now_str:
                 self._log()
                 dt_next_base += datetime.timedelta(hours=3)

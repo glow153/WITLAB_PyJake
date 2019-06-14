@@ -18,24 +18,19 @@ class RealtimeKmaWeather(AbsApi):
         super().__init__(base_url, service_key, column, hdfs_path,
                          mysql_conn_param, tag=tag, debug=debug)
 
-    def get_last_basedt(self, ctime):
-        h = ctime.hour
+    def get_last_basedt(self, obj_ctime):
+        h = obj_ctime.hour
+        m = obj_ctime.minute
 
         if h < 2:
-            ctime += datetime.timedelta(days=-1)
-            ctime = ctime.replace(hour=23)
+            obj_ctime -= datetime.timedelta(days=1)
+            obj_ctime = obj_ctime.replace(hour=23)
         else:
-            ctime = ctime.replace(hour=(h - ((h + 1) % 3)))
+            obj_ctime = obj_ctime.replace(hour=(h - ((h + 1) % 3)))
 
-        ctime.replace(minute=15)
+        obj_ctime = obj_ctime.replace(minute=15)
 
-        return ctime
-
-    def _change_dt_strfmt(self, ctime):
-        return ctime.strftime('%Y%m%d %H%M')
-
-    def _replace_malencoded_str(self, s):
-        return
+        return obj_ctime
 
     def _get_localweather_coord(self, station='충청남도 천안시서북구 부성동'):  # 형식 : '시군구 시도 동면읍'
         top_url = 'http://www.kma.go.kr/DFSROOT/POINT/DATA/top'
@@ -83,7 +78,7 @@ class RealtimeKmaWeather(AbsApi):
             # 현재 시간으로부터 가장 최근의 예보시각을 datetime 객체로 가져옴
             obj_basedt = self.get_last_basedt(datetime.datetime.now())
             # 객체를 API에 맞는 형식문자열로 변환
-            sadt = self._change_dt_strfmt(obj_basedt).split(' ')
+            sadt = obj_basedt.strftime('%Y%m%d %H%M').split(' ')
 
         # 주소 문자열을 토대로 기상청 동네예보 좌표를 구함
         nx, ny = self._get_localweather_coord(station)
@@ -100,16 +95,20 @@ class RealtimeKmaWeather(AbsApi):
     def _json2pdf(self, station):
         """
         최근 1개 발표 데이터만 가져오게끔 구성됨
+        api에 request 날릴때는 basetime을 15분에 맞춰서 날렸지만
+        response로 받은 json의 basetime은 정각으로 표기됨.
+        따라서 datetime string format에서 '분'을 '00'으로 해야함
         :param station:
         :return:
         """
         wdata = self._json_dict['response']['body']['items']['item']
-        obj_baseDt = self.get_last_basedt(datetime.datetime.now())
+        obj_baseDt = self.get_last_basedt(datetime.datetime.now() - datetime.timedelta(hours=3))
         obj_fcstDt = obj_baseDt + datetime.timedelta(hours=4)
 
-        baseDate, baseTime = self._change_dt_strfmt(obj_baseDt).split(' ')
-        fcstDate, fcstTime = self._change_dt_strfmt(obj_fcstDt).split(' ')
+        baseDate, baseTime = obj_baseDt.strftime('%Y%m%d %H00').split(' ')
+        fcstDate, fcstTime = obj_fcstDt.strftime('%Y%m%d %H00').split(' ')
 
+        self._dbg.print_e('json base time:', baseDate, baseTime, ', fcsttime', fcstDate, fcstTime)
         # make dict for one measurement
         tmpdict = {}
         for col in self._column:
@@ -117,6 +116,7 @@ class RealtimeKmaWeather(AbsApi):
 
         # fill dict using api measurement data
         for item in wdata:
+            self._dbg.print_e('item in wdata: ', item)
             # get last weather data that matches base datetime
             if str(item['baseDate']) == baseDate \
                     and str(item['baseTime']) == baseTime \
@@ -144,6 +144,7 @@ class RealtimeKmaWeather(AbsApi):
         query_param = self._make_query_param(station=station)
         self._req_api(query_param)
         self._json2pdf(station)
+
         if 'hdfs' in db_type:
             self.pdf2hdfs(hdfs_path=self._hdfs_path, mode=mode)
         if 'mysql' in db_type:
