@@ -1,7 +1,6 @@
 import json
 import requests
 import datetime
-import csv
 import pandas as pd
 from abs_class import AbsApi
 
@@ -10,7 +9,7 @@ class RealtimeKmaWeather(AbsApi):
     def __init__(self, service_key, tag, debug=False):
         base_url = 'http://newsky2.kma.go.kr/service/SecndSrtpdFrcstInfoService2/' \
                          'ForecastSpaceData'
-        column = ['station', 'datehour', 'POP', 'PTY', 'R06', 'REH', 'S06', 'SKY',
+        column = ['station', 'datehour', 'POP', 'PTY', 'REH', 'SKY',
                   'T3H', 'UUU', 'VEC', 'VVV', 'WSD']
         hdfs_path = 'hdfs:///weather/kma/weather.parquet'
         mysql_conn_param = []  # to be continued...
@@ -66,6 +65,9 @@ class RealtimeKmaWeather(AbsApi):
         self._dbg.print_p('kma coord:', coord)
         return coord[0], coord[1]
 
+    def _make_payload(self, **kwargs):
+        pass
+
     def _make_query_param(self, **kwargs):
         if 'station' in kwargs.keys():
             station = kwargs['station']
@@ -101,14 +103,16 @@ class RealtimeKmaWeather(AbsApi):
         :param station:
         :return:
         """
-        wdata = self._json_dict['response']['body']['items']['item']
-        obj_baseDt = self.get_last_basedt(datetime.datetime.now() - datetime.timedelta(hours=3))
+        obj_baseDt = self.get_last_basedt(datetime.datetime.now())
         obj_fcstDt = obj_baseDt + datetime.timedelta(hours=4)
 
         baseDate, baseTime = obj_baseDt.strftime('%Y%m%d %H00').split(' ')
         fcstDate, fcstTime = obj_fcstDt.strftime('%Y%m%d %H00').split(' ')
 
-        self._dbg.print_e('json base time:', baseDate, baseTime, ', fcsttime', fcstDate, fcstTime)
+        # self._dbg.print_e('json base time:', baseDate, baseTime, ', fcsttime', fcstDate, fcstTime)
+
+        wdata = self._json_dict['response']['body']['items']['item']
+
         # make dict for one measurement
         tmpdict = {}
         for col in self._column:
@@ -116,24 +120,25 @@ class RealtimeKmaWeather(AbsApi):
 
         # fill dict using api measurement data
         for item in wdata:
-            self._dbg.print_e('item in wdata: ', item)
+            # debug: req제대로 작동하는지 확인 : json 내용 출력해보기
+            # self._dbg.print_e('item in wdata: ', item)
+
             # get last weather data that matches base datetime
             if str(item['baseDate']) == baseDate \
                     and str(item['baseTime']) == baseTime \
                     and str(item['fcstDate']) == fcstDate \
-                    and str(item['fcstTime']) == fcstTime:
+                    and str(item['fcstTime']) == fcstTime \
+                    and item['category'] in self._column:  # 원하는 시간의 데이터이고, 원하는 칼럼이면 가져오기
                 tmpdict[item['category']] = [item['fcstValue']]
+            else:
+                pass
 
         # make pdf
         tmpdict['station'] = station
         tmpdict['datehour'] = [obj_fcstDt.strftime('%Y-%m-%d %H')]
         self._pdf = pd.DataFrame(tmpdict)
 
-        # 190606 issue
-        # R06, S06이 문자열과 실수값 모두 가지면서 dataframe이 읽히지 않는 문제
-        # 해결방안 : 해당 행을 drop
-        self._pdf = self._pdf.drop(['R06', 'S06'], axis=1)
-        self._dbg.print_p('pdf =>', self._pdf.to_string)
+        self._dbg.print_p('kma last local weather data as pdf ↓\n' + str(self._pdf))
 
     def log(self, db_type, mode='append', **kwargs):
         if 'station' in kwargs.keys():
@@ -142,7 +147,7 @@ class RealtimeKmaWeather(AbsApi):
             station = '충청남도 천안시서북구 부성동'
 
         query_param = self._make_query_param(station=station)
-        self._req_api(query_param)
+        self._req_api(method='get', query_param=query_param, payload=None)
         self._json2pdf(station)
 
         if 'hdfs' in db_type:

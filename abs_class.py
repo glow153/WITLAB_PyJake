@@ -11,6 +11,11 @@ import time
 
 
 class AbsApi(metaclass=ABCMeta):
+    """
+    important issues:
+    1. _pdf, _spdf는 최근 1회 측정 데이터만 담고 있어야함
+       안 그러면 pdf2hdfs(), pdf2mysql() 등에서 중복 저장할 가능성이 있음
+    """
     _json_dict = {}
     _pdf = None
     _spdf = None
@@ -33,21 +38,37 @@ class AbsApi(metaclass=ABCMeta):
         내부 메소드, _req_api()로부터 호출됨
         :param kwargs: {'station': 지점명 또는 지역명
                         'time': 데이터 측정 시간 및 날짜}
-        :return: nothing
+        :return: query string
         """
         pass
 
-    def _req_api(self, query_param: str):
+    @abstractmethod
+    def _make_payload(self, **kwargs):
+        """
+        make api request payload.
+        내부 메소드, _req_api()로부터 호출됨
+        :param kwargs:
+        :return: payload dict
+        """
+        pass
+
+    def _req_api(self, method: str, query_param: str, payload):
         json_response = None
         while not json_response:
             try:
-                json_response = requests.get(self._base_url + query_param)
-                self._dbg.print_p('req get :', self._base_url + query_param)
-                self._json_dict = json.loads(json_response.text)
+                self._dbg.print_p('req', method, ':', self._base_url + query_param, 'payload:', str(payload))
+
+                if method == 'get':
+                    json_response = requests.get(self._base_url + query_param)
+                elif method == 'post':
+                    json_response = requests.post(self._base_url + query_param, data=payload)
+
             except Exception as e:
-                self._dbg.print_e('@@@@@@@@@@@@@@ occurred Exception!', e.__class__.__name__, '@@@@@@@@@@@@@@')
+                self._dbg.print_e('_req_api() : occurred Exception!', e.__class__.__name__, '@@@@@@@@@@@@@@')
                 self._dbg.print_e('trying to recall api...')
                 continue
+
+        self._json_dict = json.loads(json_response.text)
 
     @abstractmethod
     def _json2pdf(self, **kwargs):
@@ -72,7 +93,7 @@ class AbsApi(metaclass=ABCMeta):
         else:
             path = hdfs_path
 
-        self._dbg.print_p('pdf -> parquet :: ', str(list(self._pdf.iloc[0])))
+        self._dbg.print_p('pdf -> hdfs :: ', str(list(self._pdf.iloc[0])))
 
         # make spark dataframe
         self._spdf = PySparkManager().sqlctxt.createDataFrame(self._pdf)

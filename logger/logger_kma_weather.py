@@ -11,7 +11,7 @@ class RealtimeKmaWeatherLogger(AbsLogger):
         self.api = RealtimeKmaWeather(service_key=key, tag=tag, debug=True)
         super().__init__(self.api, tag=tag, interal=3600000*3, debug=debug, **log_properties)
 
-    def run(self):  # 매 발표시각에 API 호출해서 데이터 받아오도록 수정해야함...
+    def run(self):  # 매 "발표시각"에 API 호출해서 데이터 받아오도록 수정해야함...
         dt_now = datetime.datetime.now()
         dt_next_base = self.api.get_last_basedt(dt_now) + datetime.timedelta(hours=3)
 
@@ -22,8 +22,8 @@ class RealtimeKmaWeatherLogger(AbsLogger):
             next_base_str = dt_next_base.strftime('%H:%M')
             now_str = datetime.datetime.now().strftime('%H:%M')
 
-            self._dbg.print_e('compare time str:', next_base_str, now_str)
-            if next_base_str == now_str:
+            # self._dbg.print_e('compare time str:', next_base_str, now_str)
+            if next_base_str <= now_str:
                 self._log()
                 dt_next_base += datetime.timedelta(hours=3)
 

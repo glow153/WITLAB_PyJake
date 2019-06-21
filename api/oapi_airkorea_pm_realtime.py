@@ -48,6 +48,9 @@ class RealtimeParticulateMatter(AbsApi):
             stime = '00'
         return sdate + ' ' + stime
 
+    def _make_payload(self, **kwargs):
+        pass
+
     def _make_query_param(self, **kwargs):
         query_params = '?ServiceKey=' + self._service_key
 
@@ -128,8 +131,8 @@ class RealtimeParticulateMatter(AbsApi):
             station_list = kwargs['station']
 
         for _station in station_list:
-            query_params = self._make_query_param(station=_station, term=kwargs['term'])
-            self._req_api(query_params)
+            query_param = self._make_query_param(station=_station, term=kwargs['term'])
+            self._req_api(method='get', query_param=query_param, payload=None)
             self._json2pdf(term=kwargs['term'])
             if 'hdfs' in db_type:
                 self.pdf2hdfs(mode=mode)
