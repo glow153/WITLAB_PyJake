@@ -29,7 +29,7 @@ class Singleton(object):
 class PySparkManager(Singleton):
     sc = None
 
-    def __init__(self, ip='210.102.142.14', app_name='appName', master='local[*]'):
+    def __init__(self, ip='210.102.142.14', app_name='appName', master='210.102.142.14:7077'):
         self.server_ip = ip
         self.sc = self._set_spark_context(app_name, master)
         self.sqlctxt = self._set_sql_context()

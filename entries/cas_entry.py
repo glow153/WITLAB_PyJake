@@ -48,10 +48,10 @@ class CasEntry:
 
         if self.valid:
             # 4. 파장비율 계산
-            self._set_additional_data(alg='trapezoid')
+            self._set_wl_ratio(alg='trapezoid')
 
             # 5. uv 계산
-            self._set_uv_dict(alg='trapezoid')
+            self._set_uv_ird(alg='trapezoid')
 
             # 6. 측정 시간 객체 생성
             try:
@@ -125,7 +125,7 @@ class CasEntry:
 
         return True
 
-    def _set_additional_data(self, alg='rect'):
+    def _set_wl_ratio(self, alg='rect'):
         """
         파장비율 계산
         :param alg: 적분 알고리즘 선택, 'rect': 직사각형 공식, 'trapezoid': 사다리꼴 공식
@@ -148,7 +148,7 @@ class CasEntry:
             self._results['lwr'] = bird_lw / bird_vis
             self._results['narr'] = bird_narrow / bird_vis
 
-    def _set_uv_dict(self, alg='rect'):
+    def _set_uv_ird(self, alg='rect'):
         """
         uv 계산
         :param alg: 적분 알고리즘 선택, 'rect': 직사각형 공식, 'trapezoid': 사다리꼴 공식
@@ -230,7 +230,7 @@ class CasEntry:
         else:
             return d
 
-    def get_element(self, item=None):
+    def get_attrib(self, item=None):
         """
         entity 하나에 대한 광특성 요소 추출
         :param item: 광특성 이름 (ISD 파일에 나와있는 이름, uv와 파장비율 등은 상기 코드에 정의된 이름으로 써야함)
