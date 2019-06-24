@@ -119,7 +119,7 @@ class KmaUvi(AbsApi):
 if __name__ == "__main__":
     kma_uvi = KmaUvi()
 
-    dt_start = datetime.datetime.strptime('2018-01-01', '%Y-%m-%d')
+    dt_start = datetime.datetime.strptime('2018-07-06', '%Y-%m-%d')
     dt_end = datetime.datetime.strptime('2019-06-21', '%Y-%m-%d')
     oneday = datetime.timedelta(days=1)
 

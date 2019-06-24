@@ -129,7 +129,8 @@ class RealtimeKmaWeather(AbsApi):
                     and str(item['fcstDate']) == fcstDate \
                     and str(item['fcstTime']) == fcstTime \
                     and item['category'] in self._column:  # 원하는 시간의 데이터이고, 원하는 칼럼이면 가져오기
-                tmpdict[item['category']] = [item['fcstValue']]
+
+                tmpdict[item['category']] = [str(item['fcstValue'])]
             else:
                 pass
 

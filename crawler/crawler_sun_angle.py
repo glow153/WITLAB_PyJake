@@ -76,7 +76,7 @@ if __name__ == '__main__':
     sac = SunAngleCrawler(debug=True)
 
     # this code works with hourly term only!!!!
-    obj_startdt = datetime.datetime.strptime('2019-11-06', '%Y-%m-%d')
+    obj_startdt = datetime.datetime.strptime('2018-01-01', '%Y-%m-%d')
     obj_enddt = datetime.datetime.strptime('2019-12-31', '%Y-%m-%d')
 
     while obj_startdt <= obj_enddt:

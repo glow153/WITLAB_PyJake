@@ -93,7 +93,13 @@ class AbsApi(metaclass=ABCMeta):
         else:
             path = hdfs_path
 
-        self._dbg.print_p('pdf -> hdfs :: ', str(list(self._pdf.iloc[0])))
+        try:
+            firstrow = list(self._pdf.iloc[0])
+        except Exception as e:
+            self._dbg.print_e('pdf is empty! : ', e.__class__.__name__)
+            return
+
+        self._dbg.print_p('pdf -> hdfs :: ', firstrow)
 
         # make spark dataframe
         self._spdf = PySparkManager().sqlctxt.createDataFrame(self._pdf)
@@ -193,7 +199,7 @@ class AbsLogger(threading.Thread, metaclass=ABCMeta):
 
         self._on = True
         self._running = False
-        self._api_obj = api_obj
+        self.api = api_obj
         self._tag = tag
         self._interval = interval  # 3600000 ms = 1 hour
 
@@ -206,10 +212,10 @@ class AbsLogger(threading.Thread, metaclass=ABCMeta):
 
     def _log(self):
         self._dbg.print_p('logging start...')
-        self._api_obj.log(db_type=self._log_properties['db_type'],
-                          mode=self._log_properties['mode'],
-                          station=self._log_properties['station'],
-                          term=self._log_properties['term'])
+        self.api.log(db_type=self._log_properties['db_type'],
+                     mode=self._log_properties['mode'],
+                     station=self._log_properties['station'],
+                     term=self._log_properties['term'])
         self._dbg.print_p('logging end.')
 
     def run(self):
