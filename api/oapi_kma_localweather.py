@@ -162,11 +162,11 @@ if __name__ == '__main__':
 
     weather = RealtimeKmaWeather(key, tag='RealtimeKmaWeather_API', debug=True)
     # weather.log(['hdfs'], mode='append', station='충청남도 천안시서북구 부성동')
-    station = '충청남도 천안시서북구 부성동'
-    query_param = weather._make_query_param(station=station)
-    weather._req_api(query_param)
-    weather._json2pdf(station)
+    # station = '충청남도 천안시서북구 부성동'
+    # query_param = weather._make_query_param(station=station)
+    # weather._req_api(query_param)
+    # weather._json2pdf(station)
 
     # normalize
-    # weather.normalize_parquet()
+    weather.normalize_parquet()
 

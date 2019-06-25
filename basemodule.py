@@ -89,6 +89,12 @@ def floatize(dec):
     except ValueError:
         return None
 
+def intize(dec):
+    try:
+        return int(dec)
+    except ValueError:
+        return None
+
 
 def classifyPm10(pm):
     if pm <= 30:
@@ -140,7 +146,9 @@ udf_cleanday = udf(lambda date: 1 if date in clean_day_list else 0, IntegerType(
 udf_weather = udf(weather, IntegerType())
 udf_classifyPm10 = udf(classifyPm10, IntegerType())
 udf_classifyPm25 = udf(classifyPm25, IntegerType())
+udf_intize = udf(intize, IntegerType())
 udf_floatize = udf(floatize, DoubleType())
+udf_string = udf(lambda s: str(s), StringType())
 
 udf_30min = udf(lambda t: t.split(':')[0] + ':' + ('00' if int(int(t.split(':')[1]) / 30) == 0 else '30'))
 udf_10min = udf(lambda t: t[:3] + str(int(int(t[3:])/10)) + '0', StringType())
