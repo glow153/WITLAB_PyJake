@@ -1,11 +1,10 @@
 import pandas as pd
 import datetime
-import csv
 import os
 
-from pyspark.sql import Row
 from pyspark.sql.types import (StructType, StructField, StringType, IntegerType, FloatType)
-from pyjake.basemodule import PySparkManager
+from basemodule import PySparkManager
+from debug_module import Log
 
 
 class FinalParticulateMatter:
@@ -34,7 +33,7 @@ class FinalParticulateMatter:
             field = StructField(self.col_list[i], self.type_list[i](), True)
             field_list.append(field)
         schema = StructType(field_list)
-        return self.sqlctxt.createDataFrame(sc.emptyRDD(), schema)
+        return self.sqlctxt.createDataFrame(self.sc.emptyRDD(), schema)
 
     # 필요성 : 미세먼지 api의 datetime 데이터 중 시간 값은 1~24시로 되어있음,
     #         이는 해당 1시간 동안 누적한 미세먼지의 양을 의미하나 기존 사용해오던 datehour의 시간형식과 다르므로
@@ -66,14 +65,27 @@ class FinalParticulateMatter:
         return df
 
     def xlsxdir2parquet(self, dirpath: str, hdfs_outpath: str):
+        from pyspark.sql.functions import udf
+        from pyspark.sql.types import StringType
+        udf_mergeCol = udf(lambda s, t: s + ' ' + t, StringType())
+
         infilelist = self.search(dirpath)
 
         # 디렉토리 내에 확정데이터 파일 하나씩 읽어서 merged로 통합시키기
-        print(infilelist[0])
+        Log.d('xlsxdir2parquet()', 'target file name:', infilelist[0])
         merged = self.xlsx2spdf(infilelist[0])
         for i in range(1, len(infilelist)):
-            print(infilelist[i])
-            merged = merged.union(self.xlsx2spdf(infilelist[i]))
+            Log.d('xlsxdir2parquet()', 'target file name:', infilelist[i])
+
+            # read xlsx and make spdf
+            spdf = self.xlsx2spdf(infilelist[i])
+
+            # concatenate two columns
+            spdf = spdf.withColumn('location', udf_mergeCol('location', 'station_name'))
+            spdf = spdf.drop('station_name')
+
+            # merge spdf
+            merged = merged.union(spdf)
             print(i, ':', merged.count())
 
         merged.show()
