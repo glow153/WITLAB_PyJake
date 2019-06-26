@@ -3,10 +3,10 @@ from abs_class import AbsLogger
 
 
 class KmaUviLogger(AbsLogger):
-    def __init__(self, debug=False, **log_prop):
+    def __init__(self, **log_prop):
         tag = 'KmaUviLogger'
-        self.api = KmaUvi(debug)
-        super().__init__(self.api, tag, 600000, debug, **log_prop)
+        self.api = KmaUvi()
+        super().__init__(self.api, tag, 600000, **log_prop)
 
 
 if __name__ == '__main__':
@@ -14,7 +14,7 @@ if __name__ == '__main__':
                       'mode': 'append',
                       'station': 'all',
                       'term': '10min'}
-    kul = KmaUviLogger(True, **log_properties)
+    kul = KmaUviLogger(**log_properties)
     kul.start_logging()
 
     try:

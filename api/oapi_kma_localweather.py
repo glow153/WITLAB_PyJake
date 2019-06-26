@@ -3,10 +3,11 @@ import requests
 import datetime
 import pandas as pd
 from abs_class import AbsApi
+from debug_module import Log
 
 
 class RealtimeKmaWeather(AbsApi):
-    def __init__(self, service_key, tag, debug=False):
+    def __init__(self, service_key):
         base_url = 'http://newsky2.kma.go.kr/service/SecndSrtpdFrcstInfoService2/' \
                          'ForecastSpaceData'
         column = ['station', 'datehour', 'POP', 'PTY', 'REH', 'SKY',
@@ -14,8 +15,10 @@ class RealtimeKmaWeather(AbsApi):
         hdfs_path = 'hdfs:///weather/kma/weather.parquet'
         mysql_conn_param = []  # to be continued...
 
+        self.tag = 'RealtimeKmaWeather'
+
         super().__init__(base_url, service_key, column, hdfs_path,
-                         mysql_conn_param, tag=tag, debug=debug)
+                         mysql_conn_param, tag=self.tag)
 
     def get_last_basedt(self, obj_ctime):
         h = obj_ctime.hour
@@ -62,7 +65,7 @@ class RealtimeKmaWeather(AbsApi):
             dict_leaf[item['value']] = [item['x'], item['y']]
 
         coord = dict_leaf[station.split()[2]]
-        self._dbg.print_p('kma coord:', coord)
+        Log.d(self.tag, 'kma coord:', coord)
         return coord[0], coord[1]
 
     def _make_payload(self, **kwargs):
@@ -139,7 +142,7 @@ class RealtimeKmaWeather(AbsApi):
         tmpdict['datehour'] = [obj_fcstDt.strftime('%Y-%m-%d %H')]
         self._pdf = pd.DataFrame(tmpdict)
 
-        self._dbg.print_p('kma last local weather data as pdf ↓\n' + str(self._pdf))
+        Log.d(self.tag, 'kma last local weather data as pdf ↓\n' + str(self._pdf))
 
     def log(self, db_type, mode='append', **kwargs):
         if 'station' in kwargs.keys():
@@ -160,7 +163,7 @@ class RealtimeKmaWeather(AbsApi):
 if __name__ == '__main__':
     key = '8Op%2FMD5uSP4m2OZ8SYn43FH%2FRpEH8BBW7dnwU1zUqG%2BAuAnfH6oYADIASnGxh7P9%2BH8dzRFGxHl9vRY%2FFwSDvw%3D%3D'
 
-    weather = RealtimeKmaWeather(key, tag='RealtimeKmaWeather_API', debug=True)
+    weather = RealtimeKmaWeather(key)
     # weather.log(['hdfs'], mode='append', station='충청남도 천안시서북구 부성동')
     # station = '충청남도 천안시서북구 부성동'
     # query_param = weather._make_query_param(station=station)

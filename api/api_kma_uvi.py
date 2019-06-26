@@ -1,11 +1,11 @@
 from abs_class import AbsApi
-
+from debug_module import Log
 import datetime
 import pandas as pd
 
 
 class KmaUvi(AbsApi):
-    def __init__(self, debug=False):
+    def __init__(self):
         self.stnCodeList = {
             '강릉': '105',
             '서울': '108',
@@ -27,8 +27,9 @@ class KmaUvi(AbsApi):
         base_url = 'http://www.climate.go.kr/home/09_monitoring/index.php/UV/getDailyIndex'
         column = ['date', 'time', 'site_code', 'tuvi']
         hdfs_path = 'hdfs:///nl/kma/uvi/uvi_10min.parquet'
+        self.tag = 'KmaUvi'
 
-        super().__init__(base_url, '', column, hdfs_path, [], 'KmaUvi', debug)
+        super().__init__(base_url, '', column, hdfs_path, [], self.tag)
 
     def _make_query_param(self, **kwargs):
         pass
@@ -62,7 +63,7 @@ class KmaUvi(AbsApi):
                 date = dtobj.strftime('%Y-%m-%d')
                 minute = int(dtobj.minute / 10) * 10
                 time = dtobj.replace(minute=minute).strftime('%H:%M')
-                self._dbg.print_e('_json2pdf(): select date time :', date, time)
+                Log.e(self.tag, '_json2pdf(): select date time :', date, time)
                 self._pdf = self._pdf.loc[(self._pdf['date'] == date) & (self._pdf['time'] == time)]
 
     def log(self, db_type: list, mode='append', **log_prop):
@@ -74,10 +75,10 @@ class KmaUvi(AbsApi):
                 try:
                     station_list = [self.stnCodeList[log_prop['station']]]
                 except KeyError:
-                    self._dbg.print_e('측정소 이름이 잘못되었습니다.')
+                    Log.e(self.tag, '측정소 이름이 잘못되었습니다.')
                     return
                 except Exception as e:
-                    self._dbg.print_e('Exception occurred!! : ', e.__class__.__name__)
+                    Log.e(self.tag, 'Exception occurred!! : ', e.__class__.__name__)
                     return
 
             for _station_code in station_list:
@@ -90,14 +91,14 @@ class KmaUvi(AbsApi):
                     self.pdf2mysql(table_name='kma_uvi', if_exists='append')
 
         except KeyError:
-            self._dbg.print_e('wrong log properties error! :', log_prop)
+            Log.e(self.tag, 'wrong log properties error! :', log_prop)
 
         # except Exception as e:
         #     self._dbg.print_e('exception occurred while logging data! :', e.__class__.__name__)
 
 
 if __name__ == "__main__":
-    kma_uvi = KmaUvi(True)
+    kma_uvi = KmaUvi()
     kma_uvi.log(['hdfs'], station='all', term='10min')
 
     # dt_start = datetime.datetime.strptime('2018-01-01', '%Y-%m-%d')

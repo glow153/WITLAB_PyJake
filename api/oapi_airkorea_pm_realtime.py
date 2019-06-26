@@ -1,8 +1,7 @@
-import csv
 import datetime
-import os
 import pandas as pd
 from abs_class import AbsApi
+from debug_module import Log
 
 
 class RealtimeParticulateMatter(AbsApi):
@@ -10,11 +9,10 @@ class RealtimeParticulateMatter(AbsApi):
     _pdf = None
     _spdf = None
 
-    def __init__(self, service_key: str, tag='', debug=False):
+    def __init__(self, service_key: str):
         """
         constructor.
         :param service_key: service key, :type: str
-        :param debug: :type: bool
         :param mysql_conn_param: mysql connection arguments,
                                  ex. ('username', 'passwd', 'host', 'port', 'db_name')
         """
@@ -25,9 +23,10 @@ class RealtimeParticulateMatter(AbsApi):
         column = ['station', 'datehour', 'khaiGrade', 'khaiValue', 'no2', 'co', 'o3', 'so2', 'pm10', 'pm25']
         hdfs_path = 'hdfs:///pm/airkorea/pm_realtime.parquet'
         mysql_conn_param = ['root', 'defacto8*jj', 'localhost', 3306, 'pm_measure']
+        self.tag = 'RealTimePM'
 
         super().__init__(base_url, service_key, column, hdfs_path,
-                         mysql_conn_param, tag=tag, debug=debug)
+                         mysql_conn_param, tag=self.tag)
 
     def _datetime_corrector(self, org_dh: str):
         """
@@ -111,7 +110,7 @@ class RealtimeParticulateMatter(AbsApi):
                    data['pm10Value'], data['pm25Value']]
             rawdata.append(row)
 
-        self._dbg.print_p('get data from api:', str(rawdata))
+        Log.d(self.tag, 'get data from api:', str(rawdata))
 
         # make pandas dataframe
         self._pdf = pd.DataFrame(rawdata)
@@ -143,7 +142,7 @@ class RealtimeParticulateMatter(AbsApi):
 if __name__ == '__main__':
     key = 'zo2rUB1wM3I11GNZFDuB84l4C94PZjP6cEb4qEff%2B94h83%2Fihaj1JJS75%2Bm0uHdFCchJw7SyGE0HZgKiZDpq%2FA%3D%3D'
 
-    pm = RealtimeParticulateMatter(key, tag='RealTimePM_API', debug=True)
+    pm = RealtimeParticulateMatter(key)
     # pm.log(['hdfs'], mode='append', station='cheonan_all', term='daily')
 
     # normalize
