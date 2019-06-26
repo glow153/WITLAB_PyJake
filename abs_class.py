@@ -1,6 +1,6 @@
 from abc import (abstractmethod, ABCMeta)
 from basemodule import (PySparkManager, MysqlManager)
-from debug_module import DbgModule, Log
+from debug_module import Log
 from selenium import webdriver
 
 import pandas as pd
@@ -302,6 +302,8 @@ class AbsCrawler(metaclass=ABCMeta):
 
             # db insert
             pdf.to_sql(name=kwargs['table_name'], con=engine, if_exists='append', index=False)
+
+            conn.close()
 
     def close(self):
         Log.d(self.tag, 'driver closing...')
