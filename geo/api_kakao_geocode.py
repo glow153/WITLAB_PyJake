@@ -49,5 +49,33 @@ def getLatLon(address: str):
 
 
 if __name__ == "__main__":
-    getLatLon('천안대로 1223-24')
+    import pandas as pd
+    from basemodule import PySparkManager
+    from pyspark.sql.types import StructField, StructType, StringType, DoubleType
+    pdf = pd.read_csv('/home/witlab/uvmon_location.csv', encoding='utf-8')
+    lat_col = []
+    lon_col = []
 
+    for i in range(len(pdf)):
+        address = pdf.iloc[i]['address']
+        Log.d('__main__', 'address:', address)
+        lat, lon = getLatLon(address)
+        lat_col.append(float(lat))
+        lon_col.append(float(lon))
+
+    pdf['lat'] = lat_col
+    pdf['lon'] = lon_col
+
+    Log.d('__main__', 'pdf:\n', pdf)
+
+    # create spark dataframe
+    # col : [﻿location,station_code,address ]
+    schema = StructType([
+        StructField('location', StringType()),
+        StructField('station_code', StringType()),
+        StructField('address', StringType()),
+        StructField('lat', DoubleType()),
+        StructField('lon', DoubleType()),
+    ])
+    spdf = PySparkManager().sqlctxt.createDataFrame(pdf, schema)
+    spdf.write.mode('overwrite').parquet('hdfs:///nl/kma/uv_location.parquet')
