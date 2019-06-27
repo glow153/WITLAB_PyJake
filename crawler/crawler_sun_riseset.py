@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 # from pyspark.sql import Row
 # from sparkmodule import PySparkManager
-from debug_module import Log
+from debugmodule import Log
 
 
 class SunRiseSetCrawler(AbsCrawler):

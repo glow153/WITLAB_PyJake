@@ -1,5 +1,5 @@
 from abs_class import AbsApi
-from debug_module import Log
+from debugmodule import Log
 import datetime
 import pandas as pd
 
