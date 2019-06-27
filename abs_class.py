@@ -147,7 +147,7 @@ class AbsApi(metaclass=ABCMeta):
         """
         pass
 
-    def normalize_parquet(self, hdfs_path=''):
+    def normalize_parquet(self, hdfs_path='', sort_col=None):
         """
         parquet 형식의 spark dataframe을 중복제거, 시간 정렬 등 정규화(normalize)하는 메소드
         로깅을 같은 날 데이터를 두번 했다거나 하면 한번씩 normalize 해줘야함
@@ -160,10 +160,15 @@ class AbsApi(metaclass=ABCMeta):
         else:  # specific path
             path = hdfs_path
 
-        Log.d(self.tag, 'normalizing: read parquet from hdfs...')
+        if not sort_col:
+            sort_col = ['station_code', 'datehour']
+        else:
+            pass
+
+        Log.d(self.tag, 'normalizing: read parquet from hdfs... :', path)
         spdf = PySparkManager().sqlctxt.read.parquet(path)
-        Log.d(self.tag, 'normalizing: remove coupled rows...')
-        spdf_new = spdf.distinct().sort('station', 'datehour').cache()
+        Log.d(self.tag, 'normalizing: remove coupled rows and sort by %s...' % sort_col)
+        spdf_new = spdf.distinct().sort(sort_col).cache()
         Log.d(self.tag, 'normalizing: write parquet...')
         spdf_new.write.mode('overwrite').parquet(path)
 

@@ -47,7 +47,7 @@ class KmaUvi(AbsApi):
         return payload
 
     def _json2pdf(self, **kwargs):
-        self._pdf = pd.DataFrame(columns=('date', 'time', 'site_code', 'tuvi'))
+        self._pdf = pd.DataFrame(columns=('date', 'time', 'station_code', 'tuvi'))
 
         for item in self._json_dict['timeseries']:
             date = item['uvb_date'][:-4]
@@ -98,11 +98,17 @@ class KmaUvi(AbsApi):
 
 
 if __name__ == "__main__":
-    kma_uvi = KmaUvi()
-    kma_uvi.log(['hdfs'], station='all', term='10min')
+    from basemodule import PySparkManager
+    spdf_uvi = PySparkManager().sqlctxt.read.parquet('hdfs:///nl/kma/uvi/uvi_10min.parquet')
+    spdf_uvi = spdf_uvi.withColumnRenamed('site_code', 'station_code')
+    spdf_uvi.write.mode('overwrite').parquet('hdfs:///nl/kma/uvi_10min.parquet')
+    # kma_uvi = KmaUvi()
+    # kma_uvi.normalize_parquet()
 
-    # dt_start = datetime.datetime.strptime('2018-01-01', '%Y-%m-%d')
-    # dt_end = datetime.datetime.strptime('2019-06-24', '%Y-%m-%d')
+    # kma_uvi.log(['hdfs'], station='all', term='10min')
+
+    # dt_start = datetime.datetime.strptime('2019-06-25', '%Y-%m-%d')
+    # dt_end = datetime.datetime.strptime('2019-06-26', '%Y-%m-%d')
     # oneday = datetime.timedelta(days=1)
     #
     # while dt_start <= dt_end:

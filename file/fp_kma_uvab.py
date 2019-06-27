@@ -24,9 +24,6 @@ class KmaUvab:
 
         self._spdf = None
 
-        debug = True
-        tag = 'KmaUvab'
-
         self._hdfs_path = 'hdfs:///nl/kma/uvab.parquet'
 
     def search(self, dirname):

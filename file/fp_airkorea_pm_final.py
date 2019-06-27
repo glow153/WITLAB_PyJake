@@ -10,13 +10,15 @@ from debug_module import Log
 class FinalParticulateMatter:
 
     def __init__(self):
-        self.col_list = ['location', 'station_code', 'station_name', 'datetime',
-                         'so2', 'co', 'o3', 'no2', 'pm10', 'pm25', 'address']
+        self.col_list_src = ['location', 'station_code', 'station_name', 'datetime',
+                             'so2', 'co', 'o3', 'no2', 'pm10', 'pm25', 'address']
+        self.col_list = ['location', 'station_code', 'address', 'datetime',
+                         'so2', 'co', 'o3', 'no2', 'pm10', 'pm25']
         self.type_list = [StringType, IntegerType, StringType, StringType,
-                          FloatType, FloatType, FloatType, FloatType,
-                          FloatType, FloatType, StringType]
+                          FloatType, FloatType, FloatType, FloatType, FloatType, FloatType]
         self.sc = PySparkManager().sc
         self.sqlctxt = PySparkManager().sqlctxt
+        self.tag = 'FinalPM'
 
     def search(self, dirname):
         # dirname 디렉토리 내의 모든 파일과 디렉토리 이름을 리스트로 반환함
@@ -27,36 +29,30 @@ class FinalParticulateMatter:
             filelist.append(full_filename)
         return filelist
 
-    def make_empty_df(self):
-        field_list = []
-        for i in range(len(self.col_list)):
-            field = StructField(self.col_list[i], self.type_list[i](), True)
-            field_list.append(field)
-        schema = StructType(field_list)
-        return self.sqlctxt.createDataFrame(self.sc.emptyRDD(), schema)
-
     # 필요성 : 미세먼지 api의 datetime 데이터 중 시간 값은 1~24시로 되어있음,
     #         이는 해당 1시간 동안 누적한 미세먼지의 양을 의미하나 기존 사용해오던 datehour의 시간형식과 다르므로
     #         맞춰줄 필요성이 있음
     def _datetime_corrector(self, datetime_int):
-        datetime_int = str(datetime_int)
-        sdate = datetime_int[:-2]
-        stime = datetime_int[8:]
-        dtdate = datetime.datetime.strptime(sdate, '%Y%m%d')
+        datetime_s = str(datetime_int)
+        dtdate = datetime.datetime.strptime(datetime_s[:-2], '%Y%m%d')
+        stime = datetime_s[8:]
         if stime == '24':
             oneday = datetime.timedelta(days=1)
             dtdate += oneday
-            sdate = dtdate.strftime('%Y%m%d')
             stime = '00'
-        return sdate + stime
+        sdate = dtdate.strftime('%Y-%m-%d')
+        return str(sdate + ' ' + stime)
 
     def xlsx2spdf(self, infilepath: str):
         data = pd.read_excel(infilepath, encoding='utf-8')  # read as pandas dataframe
-        print(data.iloc[:10])  # for debug
+        Log.d(self.tag + '.xlsx2spdf()', 'before changing column\n', data.iloc[:2])  # for debug
+
         if '망' in data.columns:  # if exists column name '망'
             data = data.drop(['망'], axis=1)  # drop it
-            print(data.iloc[:10])  # for debug
-        data.columns = self.col_list  # change column name
+            Log.d(self.tag, 'dropped column "망"\n', data.iloc[:2])  # for debug
+
+        data.columns = self.col_list_src  # change column name
+        Log.d(self.tag, 'after changing column\n', data.iloc[:2])  # for debug
 
         # correct datetime
         data['datetime'] = data['datetime'].apply(self._datetime_corrector)
@@ -72,10 +68,17 @@ class FinalParticulateMatter:
         infilelist = self.search(dirpath)
 
         # 디렉토리 내에 확정데이터 파일 하나씩 읽어서 merged로 통합시키기
-        Log.d('xlsxdir2parquet()', 'target file name:', infilelist[0])
+        Log.d(self.tag + '.xlsxdir2parquet()', 'target file name:', infilelist[0])
+        # read xlsx and make spdf
         merged = self.xlsx2spdf(infilelist[0])
+        # concatenate two columns
+        merged = merged.withColumn('location', udf_mergeCol('location', 'station_name'))
+        merged = merged.drop('station_name')
+        Log.d(self.tag + '.xlsxdir2parquet()', 'target file converted to spdf')
+        merged.show()
+
         for i in range(1, len(infilelist)):
-            Log.d('xlsxdir2parquet()', 'target file name:', infilelist[i])
+            Log.d(self.tag + '.xlsxdir2parquet()', 'target file name:', infilelist[i])
 
             # read xlsx and make spdf
             spdf = self.xlsx2spdf(infilelist[i])
@@ -86,10 +89,12 @@ class FinalParticulateMatter:
 
             # merge spdf
             merged = merged.union(spdf)
-            print(i, ':', merged.count())
+            Log.d(self.tag + '.xlsxdir2parquet()', 'target file converted to spdf')
+            merged.show()
 
         merged.show()
         merged.write.mode('overwrite').parquet(hdfs_outpath)
+        Log.d(self.tag + '.xlsxdir2parquet()', 'parquet write completed.')
 
 
 if __name__ == '__main__':

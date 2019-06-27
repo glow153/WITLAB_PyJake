@@ -1,4 +1,4 @@
-from debug_module import Log
+from pyjake.debug_module import Log
 
 import requests
 
