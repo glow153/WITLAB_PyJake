@@ -224,6 +224,16 @@ class CasEntry:
                     }
                  }
 
+        elif category == 'except_sp_ird':
+            d = {'datetime': self.get_datetime(True),
+                 'data': {
+                    'measurement conditions': self._measurement_conditions,
+                    'results': self._results,
+                    'general information': self._general_information,
+                    'uv': self._uv
+                    }
+                 }
+
         if to_json:
             import json
             return json.dumps(d, indent=2)
