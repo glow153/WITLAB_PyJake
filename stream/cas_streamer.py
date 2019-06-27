@@ -8,10 +8,10 @@ import time
 class MyEventHandler(FileSystemEventHandler):
     kafka_producer = None
 
-    def __init__(self, observer, filename, producer):
+    def __init__(self, observer, filename):
         self.observer = observer
         self.filename = filename
-        self.kafka_producer = producer
+        # self.kafka_producer = producer
 
     def on_created(self, event):
         # TODO: send nl entity to server
@@ -32,7 +32,7 @@ class CasEntryStreamer:
         # producer = KafkaProducer(bootstrap_servers='localhost:9092')
 
         observer = Observer()
-        event_handler = MyEventHandler(observer, self.remote_dirpath, producer)
+        event_handler = MyEventHandler(observer, self.remote_dirpath)
         observer.schedule(event_handler, self.remote_dirpath, recursive=True)
         observer.start()
         print('watchdog started.')

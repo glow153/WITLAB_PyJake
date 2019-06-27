@@ -69,3 +69,4 @@ if __name__ == "__main__":
     window = CasStreamerFrame('WitLab CAS data streamer v1.0 - jake')
     window.show()
     app.exec_()
+
