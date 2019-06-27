@@ -202,11 +202,11 @@ class CasEntry:
                 sp_ird[str(key).replace('.', '_')] = self._sp_ird[key]
 
         d = {}
-        if category == 'measurement conditions':
+        if category == 'measurement_conditions':
             d = self._measurement_conditions
         elif category == 'results':
             d = self._results
-        elif category == 'general information':
+        elif category == 'general_information':
             d = self._general_information
         elif category == 'sp_ird':
             d = sp_ird if str_key_type else self._sp_ird
@@ -216,9 +216,9 @@ class CasEntry:
         elif category == 'all':
             d = {'datetime': self.get_datetime(True),
                  'data': {
-                    'measurement conditions': self._measurement_conditions,
+                    'measurement_conditions': self._measurement_conditions,
                     'results': self._results,
-                    'general information': self._general_information,
+                    'general_information': self._general_information,
                     'sp_ird': sp_ird if str_key_type else self._sp_ird,
                     'uv': self._uv
                     }
@@ -227,9 +227,9 @@ class CasEntry:
         elif category == 'except_sp_ird':
             d = {'datetime': self.get_datetime(True),
                  'data': {
-                    'measurement conditions': self._measurement_conditions,
+                    'measurement_conditions': self._measurement_conditions,
                     'results': self._results,
-                    'general information': self._general_information,
+                    'general_information': self._general_information,
                     'uv': self._uv
                     }
                  }
