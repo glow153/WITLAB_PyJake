@@ -1,5 +1,6 @@
 from abc import (abstractmethod, ABCMeta)
-from basemodule import (PySparkManager, MysqlManager)
+from sparkmodule import PySparkManager
+from basemodule import MysqlManager
 from debug_module import Log
 from selenium import webdriver
 

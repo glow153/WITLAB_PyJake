@@ -2,8 +2,8 @@ import pandas as pd
 import datetime
 import os
 
-from pyspark.sql.types import (StructType, StructField, StringType, IntegerType, FloatType)
-from basemodule import PySparkManager
+from pyspark.sql.types import (StringType, IntegerType, FloatType)
+from sparkmodule import PySparkManager
 from debug_module import Log
 
 

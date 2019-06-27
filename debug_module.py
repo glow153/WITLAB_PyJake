@@ -1,13 +1,10 @@
-import datetime
-import sys
-
-
 class Log:
     def __init__(self):
         pass
 
     @staticmethod
     def _timestamp():
+        import datetime
         return datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
     @staticmethod
@@ -20,5 +17,6 @@ class Log:
 
     @staticmethod
     def e(tag, *content):
+        import sys
         print(Log._get_header(tag), *content, file=sys.stderr)
 

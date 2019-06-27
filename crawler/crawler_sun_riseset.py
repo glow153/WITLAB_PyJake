@@ -1,8 +1,9 @@
 from abs_class import AbsCrawler
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
-from pyspark.sql import Row
-from basemodule import PySparkManager
+# from pyspark.sql import Row
+# from sparkmodule import PySparkManager
+from debug_module import Log
 
 
 class SunRiseSetCrawler(AbsCrawler):
@@ -34,7 +35,7 @@ class SunRiseSetCrawler(AbsCrawler):
             kwargs['lon'] = lon
 
         url = self._make_url(**kwargs)
-        self._dbg.print_p('request url :' + url)
+        Log.d(self.tag, 'request url :' + url)
         self._driver.get(url)
         soup = BeautifulSoup(self._driver.page_source, 'html.parser')
 
@@ -46,7 +47,7 @@ class SunRiseSetCrawler(AbsCrawler):
         cul = culmination[0:2] + ':' + culmination[4:-1]
         ss = sunset[0:2] + ':' + sunset[4:-1]
 
-        self._dbg.print_p(date, lat, lon, ': %s %s %s' % (sr, cul, ss))
+        Log.d(self.tag, date, lat, lon, ': %s %s %s' % (sr, cul, ss))
 
         return [kwargs['date'], sr, cul, ss]
 
@@ -73,14 +74,14 @@ class SunRiseSetCrawler(AbsCrawler):
 
         outfile.close()
 
-    def csv2parquet(self, local_infilepath: str, hdfs_outpath: str):
-        pysparkmgr = PySparkManager()
-        srs = pysparkmgr.sc.textFile(local_infilepath) \
-            .map(lambda s: s.split(",")) \
-            .map(lambda s: Row(datetime=s[0], rise=s[1], culmination=s[2], set=s[3])) \
-            .toDF()
-
-        srs.write.mode('overwrite').parquet(hdfs_outpath)
+    # def csv2parquet(self, local_infilepath: str, hdfs_outpath: str):
+    #     pysparkmgr = PySparkManager()
+    #     srs = pysparkmgr.sc.textFile(local_infilepath) \
+    #         .map(lambda s: s.split(",")) \
+    #         .map(lambda s: Row(datetime=s[0], rise=s[1], culmination=s[2], set=s[3])) \
+    #         .toDF()
+    #
+    #     srs.write.mode('overwrite').parquet(hdfs_outpath)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()

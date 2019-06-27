@@ -1,7 +1,6 @@
 import requests
 from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
-import pandas as pd
 
 
 class Division:
@@ -75,7 +74,7 @@ class Division:
 
 
 if __name__ == '__main__':
-    from pyjake.basemodule import PySparkManager
+    from sparkmodule import PySparkManager
     from pyspark.sql.functions import udf
     from pyspark.sql.types import StringType
 
