@@ -162,7 +162,7 @@ class AbsApi(metaclass=ABCMeta):
             path = hdfs_path
 
         if not sort_col:
-            sort_col = ['station_code', 'datehour']
+            sort_col = ['station', 'datehour']
         else:
             pass
 
@@ -199,7 +199,7 @@ class AbsLogger(threading.Thread, metaclass=ABCMeta):
            - 현재 방법도 요청에 따라 시간이 밀리지 않아 좋음
            - 여러 종류를 사용할 때 쓰레드 사용이 오버헤드가 많아질 수도 있겠다... -> 스케줄러 사용
     """
-    def __init__(self, api_obj, tag, interval=3600000, debug=False, **log_properties):
+    def __init__(self, api_obj, tag, interval=3600000, **log_properties):
         threading.Thread.__init__(self)
 
         self._on = True

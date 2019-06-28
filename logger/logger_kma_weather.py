@@ -9,7 +9,7 @@ class RealtimeKmaWeatherLogger(AbsLogger):
     def __init__(self, **log_properties):
         key = '8Op%2FMD5uSP4m2OZ8SYn43FH%2FRpEH8BBW7dnwU1zUqG%2BAuAnfH6oYADIASnGxh7P9%2BH8dzRFGxHl9vRY%2FFwSDvw%3D%3D'
         self.tag = 'RealtimeKmaWeatherLogger'
-        self.api = RealtimeKmaWeather(service_key=key, tag=self.tag, debug=True)
+        self.api = RealtimeKmaWeather(service_key=key)
         super().__init__(self.api, tag=self.tag, interal=3600000*3, **log_properties)
 
     def run(self):  # 매 "발표시각"에 API 호출해서 데이터 받아오도록 수정해야함...
