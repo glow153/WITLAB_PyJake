@@ -3,7 +3,7 @@ import requests
 import datetime
 import pandas as pd
 from abs_class import AbsApi
-from debug_module import Log
+from debugmodule import Log
 
 
 class RealtimeKmaWeather(AbsApi):

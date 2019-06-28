@@ -1,4 +1,4 @@
-from debug_module import Log
+from debugmodule import Log
 from sparkmodule import PySparkManager
 import os
 import pandas as pd

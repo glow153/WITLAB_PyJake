@@ -4,7 +4,7 @@ import os
 
 from pyspark.sql.types import (StringType, IntegerType, FloatType)
 from sparkmodule import PySparkManager
-from debug_module import Log
+from debugmodule import Log
 
 
 class FinalParticulateMatter:
