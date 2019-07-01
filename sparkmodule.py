@@ -68,6 +68,7 @@ def floatize(dec):
     except ValueError:
         return None
 
+
 def intize(dec):
     try:
         return int(dec)
@@ -131,5 +132,10 @@ udf_string = udf(lambda s: str(s), StringType())
 
 udf_30min = udf(lambda t: t.split(':')[0] + ':' + ('00' if int(int(t.split(':')[1]) / 30) == 0 else '30'))
 udf_10min = udf(lambda t: t[:3] + str(int(int(t[3:])/10)) + '0', StringType())
+
+udf_sum = udf(lambda *v: sum(v), DoubleType())
+udf_avg = udf(lambda *v: sum(v) / len(v), DoubleType())
+udf_max = udf(lambda *v: max(v), DoubleType())
+udf_min = udf(lambda *v: min(v), DoubleType())
 
 

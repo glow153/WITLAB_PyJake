@@ -17,6 +17,8 @@ class RealtimeKmaWeather(AbsApi):
 
         self.tag = 'RealtimeKmaWeather'
 
+        self.delay_min = 30
+
         super().__init__(base_url, service_key, column, hdfs_path,
                          mysql_conn_param, tag=self.tag)
 
@@ -30,7 +32,7 @@ class RealtimeKmaWeather(AbsApi):
         else:
             obj_ctime = obj_ctime.replace(hour=(h - ((h + 1) % 3)))
 
-        obj_ctime = obj_ctime.replace(minute=15)
+        obj_ctime = obj_ctime.replace(minute=self.delay_min)
 
         return obj_ctime
 
