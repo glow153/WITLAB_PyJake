@@ -1,6 +1,6 @@
-from api.oapi_kma_localweather import RealtimeKmaWeather
-from abs_class import AbsLogger
-from debugmodule import Log
+from ..api.oapi_kma_localweather import RealtimeKmaWeather
+from ..abs_class import AbsLogger
+from ..debugmodule import Log
 import datetime
 import time
 

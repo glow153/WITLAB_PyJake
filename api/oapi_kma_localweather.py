@@ -2,8 +2,8 @@ import json
 import requests
 import datetime
 import pandas as pd
-from abs_class import AbsApi
-from debugmodule import Log
+from ..abs_class import AbsApi
+from ..debugmodule import Log
 
 
 class RealtimeKmaWeather(AbsApi):

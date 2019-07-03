@@ -1,6 +1,6 @@
 from pyspark.sql.functions import udf
 from pyspark.sql.types import (IntegerType, StringType, DoubleType)
-from basemodule import Singleton
+from .basemodule import Singleton
 
 
 class PySparkManager(Singleton):

@@ -1,7 +1,7 @@
 from abc import (abstractmethod, ABCMeta)
-from sparkmodule import PySparkManager
-from basemodule import MysqlManager
-from debugmodule import Log
+from .sparkmodule import PySparkManager
+from .basemodule import MysqlManager
+from .debugmodule import Log
 from selenium import webdriver
 
 import pandas as pd

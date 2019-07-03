@@ -1,4 +1,4 @@
-from abs_class import AbsCrawler
+from ..abs_class import AbsCrawler
 from bs4 import BeautifulSoup
 import datetime
 
