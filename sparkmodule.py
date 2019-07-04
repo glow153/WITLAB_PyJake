@@ -83,8 +83,10 @@ def classifyPm10(pm):
         return 2
     elif 80 < pm <= 150:
         return 3
-    else:
+    elif pm < 150:
         return 4
+    else:
+        return 0
 
 
 def classifyPm25(pm):
@@ -94,8 +96,10 @@ def classifyPm25(pm):
         return 2
     elif 35 < pm <= 75:
         return 3
-    else:
+    elif pm < 75:
         return 4
+    else:
+        return 0
 
 
 def is_number(n):
