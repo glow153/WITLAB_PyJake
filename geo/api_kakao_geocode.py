@@ -50,7 +50,7 @@ def getLatLon(address: str):
 
 if __name__ == "__main__":
     import pandas as pd
-    from ..basemodule import PySparkManager
+    from mysqlmodule import PySparkManager
     from pyspark.sql.types import StructField, StructType, StringType, DoubleType
     pdf = pd.read_csv('/home/witlab/uvmon_location.csv', encoding='utf-8')
     lat_col = []

@@ -2,7 +2,7 @@ import json
 import requests
 import datetime
 import pandas as pd
-from ..abs_class import AbsApi
+from ..basemodule import AbsApi
 from ..debugmodule import Log
 
 

@@ -67,7 +67,7 @@ class ScrapSunRiseSet:
 
     def csv2parquet(self, local_infilepath: str, hdfs_outpath: str):
         from pyspark.sql import Row
-        from basemodule import PySparkManager
+        from mysqlmodule import PySparkManager
 
         pysparkmgr = PySparkManager()
         srs = pysparkmgr.sc.textFile(local_infilepath) \

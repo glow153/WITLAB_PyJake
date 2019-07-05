@@ -1,4 +1,4 @@
-from ..abs_class import AbsApi
+from ..basemodule import AbsApi
 from ..debugmodule import Log
 import datetime
 import pandas as pd
@@ -98,7 +98,7 @@ class KmaUvi(AbsApi):
 
 
 if __name__ == "__main__":
-    from basemodule import PySparkManager
+    from mysqlmodule import PySparkManager
     spdf_uvi = PySparkManager().sqlctxt.read.parquet('hdfs:///nl/kma/uvi/uvi_10min.parquet')
     spdf_uvi = spdf_uvi.withColumnRenamed('site_code', 'station_code')
     spdf_uvi.write.mode('overwrite').parquet('hdfs:///nl/kma/uvi_10min.parquet')
