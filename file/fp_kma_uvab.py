@@ -1,5 +1,5 @@
 from ..debugmodule import Log
-from ..sparkmodule import PySparkManager
+from sparkmodule import PySparkManager
 import os
 import pandas as pd
 

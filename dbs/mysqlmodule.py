@@ -1,4 +1,4 @@
-from .basemodule import Singleton
+from ..basemodule import Singleton
 
 
 class MysqlManager(Singleton):
