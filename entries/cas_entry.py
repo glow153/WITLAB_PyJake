@@ -1,13 +1,15 @@
 import datetime
 import os
 
+from debugmodule import Log
+
 
 class CasEntry:
     """
     CAS 140 CT - 152 Spectrometer Measurement Data
     <용어 정리>
-    엔티티 (entity) : CAS 1회 측정에 해당하는 광특성 집합, ISD 파일 하나를 의미
-    광특성 요소 (element) : ISD 로 출력되는 모든 값 하나하나 (ex. 조도 : Photometric)
+    엔트리 (entry) : CAS 1회 측정에 해당하는 광특성 집합, ISD 파일 하나를 의미
+    광특성 요소 (Attribute, attrib) : ISD 로 출력되는 모든 값 하나하나 (ex. 조도 : Photometric)
     범주 (category) : element 들의 분류를 위한 데이터 집합, ISD 파일에서 []로 둘러싸여있음
     """
 
@@ -17,6 +19,7 @@ class CasEntry:
     _general_information = {}
     _sp_ird = {}
     _uv = {}
+    _additionals = {}
     valid = None  # 유효 플래그 (ISD 파일이 올바른 형식이고 mapping이 정상적이면 True)
     objDatetime = None  # 측정 시간 객체, str으로 반환 및 시간연산을 위해 쓰임
 
@@ -33,10 +36,17 @@ class CasEntry:
         :param debug: ISD parsing debug mode, :type: bool
         """
 
+        # 0. initialize vars
+        self.fname = fname
+        self.debug = debug
+        self.tag = 'CasEntry(%s)' % fname.split('\\')[1]
+
         # 1. ISD 파일 읽기
         try:
             isdfile = open(fname, 'rt', encoding='utf-8', errors='ignore')
-        except (FileNotFoundError, PermissionError):
+        except (FileNotFoundError, PermissionError) as e:
+            if self.debug:
+                Log.e(self.tag + '.__init__()', 'file read error: ', e.__class__.__name__)
             self.valid = False
             return
 
@@ -59,8 +69,17 @@ class CasEntry:
                     self._general_information['Date'] + ' ' + self._general_information['Time'],
                     '%m/%d/%Y %I:%M:%S %p')
             except (ValueError, TypeError, Exception):
-                self.valid = False
-                return
+                if self.debug:
+                    Log.e(self.tag + '.__init__()', 'error reading datetime: ',
+                          self._general_information['Date'] + ' ' + self._general_information['Time'])
+                self.objDatetime = None
+
+            # 7. 기타 정보 작성
+            self.set_additional_data()
+
+        else:  # not valid entry
+            if self.debug:
+                Log.e(self.tag + '.__init__()', 'mapping error: ISD file is not correct.')
 
     def _map_data(self, file):
         """
@@ -72,6 +91,8 @@ class CasEntry:
         category = 0
 
         if line.strip() != '[Curve Information]':
+            if self.debug:
+                Log.e(self.tag + '._map_data()', 'There is no line [Curve Information]')
             return False
 
         while line:
@@ -86,24 +107,25 @@ class CasEntry:
                 category = 4
             else:
                 # try:
-                if line.find('=') != -1:
+                if line.find('=') != -1:  # if there is '=' in a single line
+
                     strKey, strValue = line.split('=')
                     key = strKey.strip()
                     strValue = strValue.strip()
                     endidx = strKey.find('[')
                     if endidx != -1:
                         key = key[:endidx].strip()
-                    try:
+                    try:  # trying to make value float
                         value = float(strValue)
-                    except ValueError:
+                    except ValueError:  # if error, let it be string
                         value = strValue
 
-                elif line.find('\t') != -1:
+                elif line.find('\t') != -1:  # if there is 'tab' in a single line
                     strKey, strValue = line.split('\t')
                     key = float(strKey.strip())
                     value = float(strValue.strip())
-                else:
-                    line = file.readline()
+                else:    # if there is no '=' or 'tab'
+                    line = file.readline()  # continue to read next
                     continue
 
                 if category == 1:
@@ -172,6 +194,10 @@ class CasEntry:
 
         self._uv['auv'] = self.get_ird(200, 400, weight_func='actinic_uv', alg=alg)
 
+    def set_additional_data(self):
+        self._general_information['file_abs_path'] = self.fname
+        self._general_information['file_name'] = self.fname.split('\\')[1]
+
     def get_datetime(self, tostr=False):
         """
         측정시간 객체를 반환
@@ -179,9 +205,17 @@ class CasEntry:
         :return: 측정시간 정보 :type: datetime or str
         """
         if tostr:
-            return self.objDatetime.strftime('%Y-%m-%d %H:%M:%S')
+            if self.objDatetime:
+                return self.objDatetime.strftime('%Y-%m-%d %H:%M:%S')
+            else:
+                return self._general_information['Date'] + ' ' + self._general_information['Time']
         else:
-            return self.objDatetime
+            if self.objDatetime:
+                return self.objDatetime
+            else:
+                if self.debug:
+                    Log.e(self.tag + '.get_datetime()')
+                return None
 
     def get_category(self, category='all', str_key_type=False, to_json=False):
         """

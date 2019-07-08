@@ -1,23 +1,24 @@
-from .cas_entry import CasEntry
+from entries.cas_entry import CasEntry
 import csv
 
 
-dirname = '/home/witlab/dw/raw/20170826'
+dirname = 'C:/Users/WitLab-DaeHwan/Desktop/ledtest'
 fnamelist = CasEntry.search(dirname)
-outfile = open('/home/witlab/output_20170826.csv', 'w', encoding='utf-8', errors='ignore', newline='')
+outfile = open(dirname + '/output_20190708.csv', 'w', encoding='utf-8', errors='ignore', newline='')
 cw = csv.writer(outfile)
 
-cw.writerow(['time', 'illum', 'uvb', 'CCDTemperature'])
+cw.writerow(['time', 'illum', 'cct', 'swr', 'narrow'])
 for fname in fnamelist:
-    entry = CasEntry(fname)
+    entry = CasEntry(fname, debug=True)
     if not entry.valid:
         continue
     time = entry.get_datetime(tostr=True)
     illum = entry.get_attrib('Photometric')
-    uvb = entry.get_attrib('uvb')
-    ccd_temp = entry.get_attrib('CCDTemperature').split()[0]
+    cct = entry.get_attrib('CCT')
+    swr = entry.get_attrib('swr')
+    narrow = entry.get_attrib('narr')
 
-    row = [time, illum, uvb, ccd_temp]
+    row = [time, illum, cct, swr, narrow]
 
     cw.writerow(row)
     print(fname, ':', row)
