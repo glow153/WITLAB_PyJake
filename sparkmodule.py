@@ -72,7 +72,7 @@ def floatize(dec):
 def intize(dec):
     try:
         return int(dec)
-    except ValueError:
+    except (ValueError, TypeError):
         return None
 
 
