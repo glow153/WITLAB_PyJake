@@ -1,7 +1,4 @@
 from abc import (abstractmethod, ABCMeta)
-from .sparkmodule import PySparkManager
-from .mysqlmodule import MysqlManager
-from .debugmodule import Log
 
 from selenium import webdriver
 import pandas as pd
@@ -9,6 +6,10 @@ import requests
 import json
 import threading
 import time
+
+# from .dbs.mysqlmodule import MysqlManager
+from .sparkmodule import PySparkManager
+from .debugmodule import Log
 
 
 class Singleton(object):

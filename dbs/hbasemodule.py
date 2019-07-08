@@ -1,9 +1,10 @@
 import happybase
 import pprint
-from .entries.cas_entry import CasEntry
+from ..entries.cas_entry import CasEntry
+from ..basemodule import Singleton
 
 
-class HappybaseManager:
+class HappybaseManager(Singleton):
     _server_addr = ''
     _tablename = ''
     _hb_conn = None
