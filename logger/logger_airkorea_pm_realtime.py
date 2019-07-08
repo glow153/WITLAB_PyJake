@@ -1,5 +1,5 @@
-from ..api.oapi_airkorea_pm_realtime import RealtimeParticulateMatter
-from ..basemodule import AbsLogger
+from api.oapi_airkorea_pm_realtime import RealtimeParticulateMatter
+from basemodule import AbsLogger
 
 
 class RealtimePmLogger(AbsLogger):

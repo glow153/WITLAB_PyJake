@@ -1,4 +1,4 @@
-from ..debugmodule import Log
+from debugmodule import Log
 
 import requests
 

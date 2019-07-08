@@ -1,4 +1,4 @@
-from ..sparkmodule import PySparkManager
+from sparkmodule import PySparkManager
 
 
 def search(dirname):

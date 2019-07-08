@@ -1,5 +1,5 @@
-from ..api.api_kma_uvi import KmaUvi
-from ..basemodule import AbsLogger
+from api.api_kma_uvi import KmaUvi
+from basemodule import AbsLogger
 
 
 class KmaUviLogger(AbsLogger):

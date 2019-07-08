@@ -1,6 +1,6 @@
 import happybase
 import pprint
-from ..entries.cas_entry import CasEntry
+from entries.cas_entry import CasEntry
 from ..basemodule import Singleton
 
 

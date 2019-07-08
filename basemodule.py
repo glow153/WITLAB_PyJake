@@ -7,9 +7,7 @@ import json
 import threading
 import time
 
-# from .dbs.mysqlmodule import MysqlManager
-from .sparkmodule import PySparkManager
-from .debugmodule import Log
+from debugmodule import Log
 
 
 class Singleton(object):
@@ -92,6 +90,7 @@ class AbsApi(metaclass=ABCMeta):
         pass
 
     def pdf2hdfs(self, mode='append', hdfs_path=''):
+        from sparkmodule import PySparkManager
         """
         hdfs에 parquet 형식으로 저장
         :param mode: 저장 방식, 'append', 'overwrite'
@@ -120,6 +119,7 @@ class AbsApi(metaclass=ABCMeta):
         Log.d(self.tag, 'parquet write completed.')
 
     def pdf2mysql(self, table_name: str, if_exists: str = 'append'):
+        from dbs.mysqlmodule import MysqlManager
         """
         mysql에 테이블 형식으로 저장, 테이블이 있어야 함 (테이블 없을 시 새로 생성 기능도 추가해야 함)
         :param table_name: 테이블 명,
@@ -159,6 +159,7 @@ class AbsApi(metaclass=ABCMeta):
         pass
 
     def normalize_parquet(self, hdfs_path='', sort_col=None):
+        from sparkmodule import PySparkManager
         """
         parquet 형식의 spark dataframe을 중복제거, 시간 정렬 등 정규화(normalize)하는 메소드
         로깅을 같은 날 데이터를 두번 했다거나 하면 한번씩 normalize 해줘야함
@@ -184,6 +185,7 @@ class AbsApi(metaclass=ABCMeta):
         spdf_new.write.mode('overwrite').parquet(path)
 
     def get_last_log_datehour(self, db='hdfs'):
+        from sparkmodule import PySparkManager
         if db == 'hdfs':
             spdf_total = PySparkManager().sqlctxt.read.parquet(self._hdfs_path)
             last_date = spdf_total.sort(spdf_total.datehour.desc()).first()

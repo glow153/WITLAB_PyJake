@@ -1,5 +1,5 @@
-from ..basemodule import Singleton
-from ..debugmodule import Log
+from basemodule import Singleton
+from debugmodule import Log
 import pymongo
 
 

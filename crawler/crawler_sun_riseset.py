@@ -1,5 +1,5 @@
-from ..basemodule import AbsCrawler
-from ..debugmodule import Log
+from basemodule import AbsCrawler
+from debugmodule import Log
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 
