@@ -65,7 +65,7 @@ def weather(month):
 def floatize(dec):
     try:
         return float(dec)
-    except ValueError:
+    except (ValueError, TypeError):
         return None
 
 
