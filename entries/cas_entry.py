@@ -23,6 +23,127 @@ class CasEntry:
     valid = None  # 유효 플래그 (ISD 파일이 올바른 형식이고 mapping이 정상적이면 True)
     objDatetime = None  # 측정 시간 객체, str으로 반환 및 시간연산을 위해 쓰임
 
+    newkeymap = {  # old_name : new_name
+        'file_abs_path': 'file_abs_path',
+        'file_name': 'file_name',
+        'IntegrationTime': 'integration_time',
+        'CCDTemperature': 'ccd_temp',
+        'DCCCDTemperature': 'dc_ccd_temp',
+        'Last Dark Current': 'last_dark_current',
+        'Signal Level (Counts)': 'signal_level_cnt',
+        'Signal Level (%)': 'signal_level_percent',
+        'Radiometric': 'bird_all',
+        'Photometric': 'illum',
+        'UVA': 'cas_uva',
+        'UVB': 'cas_uvb',
+        'UVC': 'cas_uvc',
+        'VIS': 'bird_vis',
+        'Tristimulus_X': 'tri_x',
+        'Tristimulus_Y': 'tri_y',
+        'Tristimulus_Z': 'tri_z',
+        'FootLambert': 'foot_lambert',
+        'ColorCoordinates/x': 'color_co_x',
+        'ColorCoordinates/y': 'color_co_y',
+        'ColorCoordinates/z': 'color_co_z',
+        'ColorCoordinates/u': 'color_co_u',
+        'ColorCoordinates/v1960': 'color_co_v1960',
+        'ColorCoordinates/v1976': 'color_co_v1976',
+        'PeakWavelength': 'peak_wl',
+        'CentroidWavelength': 'cent_wl',
+        'DominantWavelength': 'domi_wl',
+        'Purity': 'purity',
+        'Width50': 'width50',
+        'CCT': 'cct',
+        'CCT_JIS': 'cct_jis',
+        'PlanckDistance': 'planck_dist',
+        'SDCM': 'sdcm',
+        'RedEffect': 'red_effect',
+        'VisEffect': 'vis_effect',
+        'CRI': 'cri',
+        'CRI/CRI01': 'cri01',
+        'CRI/CRI02': 'cri02',
+        'CRI/CRI03': 'cri03',
+        'CRI/CRI04': 'cri04',
+        'CRI/CRI05': 'cri05',
+        'CRI/CRI06': 'cri06',
+        'CRI/CRI07': 'cri07',
+        'CRI/CRI08': 'cri08',
+        'CRI/CRI09': 'cri09',
+        'CRI/CRI10': 'cri10',
+        'CRI/CRI11': 'cri11',
+        'CRI/CRI12': 'cri12',
+        'CRI/CRI13': 'cri13',
+        'CRI/CRI14': 'cri14',
+        'CRI/CRI15': 'cri15',
+        'CRI/CRI16': 'cri16',
+        'CDI': 'cdi',
+        'TM30FidelityIndex': 'tm30_fi_idx',
+        'TM30FidelityIndex/Rfh01': 'tm30_fi_idx_01',
+        'TM30FidelityIndex/Rfh02': 'tm30_fi_idx_02',
+        'TM30FidelityIndex/Rfh03': 'tm30_fi_idx_03',
+        'TM30FidelityIndex/Rfh04': 'tm30_fi_idx_04',
+        'TM30FidelityIndex/Rfh05': 'tm30_fi_idx_05',
+        'TM30FidelityIndex/Rfh06': 'tm30_fi_idx_06',
+        'TM30FidelityIndex/Rfh07': 'tm30_fi_idx_07',
+        'TM30FidelityIndex/Rfh08': 'tm30_fi_idx_08',
+        'TM30FidelityIndex/Rfh09': 'tm30_fi_idx_09',
+        'TM30FidelityIndex/Rfh10': 'tm30_fi_idx_10',
+        'TM30FidelityIndex/Rfh11': 'tm30_fi_idx_11',
+        'TM30FidelityIndex/Rfh12': 'tm30_fi_idx_12',
+        'TM30FidelityIndex/Rfh13': 'tm30_fi_idx_13',
+        'TM30FidelityIndex/Rfh14': 'tm30_fi_idx_14',
+        'TM30FidelityIndex/Rfh15': 'tm30_fi_idx_15',
+        'TM30FidelityIndex/Rfh16': 'tm30_fi_idx_16',
+        'TM30GamutIndex': 'tmp30_gam_idx',
+        'TM30GraphicShifts/Chroma01': 'tmp30_grph_ch01',
+        'TM30GraphicShifts/Chroma02': 'tmp30_grph_ch02',
+        'TM30GraphicShifts/Chroma03': 'tmp30_grph_ch03',
+        'TM30GraphicShifts/Chroma04': 'tmp30_grph_ch04',
+        'TM30GraphicShifts/Chroma05': 'tmp30_grph_ch05',
+        'TM30GraphicShifts/Chroma06': 'tmp30_grph_ch06',
+        'TM30GraphicShifts/Chroma07': 'tmp30_grph_ch07',
+        'TM30GraphicShifts/Chroma08': 'tmp30_grph_ch08',
+        'TM30GraphicShifts/Chroma09': 'tmp30_grph_ch09',
+        'TM30GraphicShifts/Chroma10': 'tmp30_grph_ch10',
+        'TM30GraphicShifts/Chroma11': 'tmp30_grph_ch11',
+        'TM30GraphicShifts/Chroma12': 'tmp30_grph_ch12',
+        'TM30GraphicShifts/Chroma13': 'tmp30_grph_ch13',
+        'TM30GraphicShifts/Chroma14': 'tmp30_grph_ch14',
+        'TM30GraphicShifts/Chroma15': 'tmp30_grph_ch15',
+        'TM30GraphicShifts/Chroma16': 'tmp30_grph_ch16',
+        'TM30GraphicShifts/Hue01': 'tmp30_grph_hu01',
+        'TM30GraphicShifts/Hue02': 'tmp30_grph_hu02',
+        'TM30GraphicShifts/Hue03': 'tmp30_grph_hu03',
+        'TM30GraphicShifts/Hue04': 'tmp30_grph_hu04',
+        'TM30GraphicShifts/Hue05': 'tmp30_grph_hu05',
+        'TM30GraphicShifts/Hue06': 'tmp30_grph_hu06',
+        'TM30GraphicShifts/Hue07': 'tmp30_grph_hu07',
+        'TM30GraphicShifts/Hue08': 'tmp30_grph_hu08',
+        'TM30GraphicShifts/Hue09': 'tmp30_grph_hu09',
+        'TM30GraphicShifts/Hue10': 'tmp30_grph_hu10',
+        'TM30GraphicShifts/Hue11': 'tmp30_grph_hu11',
+        'TM30GraphicShifts/Hue12': 'tmp30_grph_hu12',
+        'TM30GraphicShifts/Hue13': 'tmp30_grph_hu13',
+        'TM30GraphicShifts/Hue14': 'tmp30_grph_hu14',
+        'TM30GraphicShifts/Hue15': 'tmp30_grph_hu15',
+        'TM30GraphicShifts/Hue16': 'tmp30_grph_hu16',
+        'lwr': 'lwr',
+        'mwr': 'mwr',
+        'swr': 'swr',
+        'narr': 'narr',
+        'auv': 'auv',
+        'duv': 'duv',
+        'euv': 'euv',
+        'euva': 'euva',
+        'euva_ratio': 'euva_ratio',
+        'euvb': 'euvb',
+        'euvb_ratio': 'euvb_ratio',
+        'tuv': 'tuv',
+        'uva': 'uva',
+        'uvb': 'uvb',
+        'uvi': 'uvi',
+    }
+
     def __init__(self, fname: str, debug=False):
         """
         1. ISD 파일 읽기
@@ -31,6 +152,7 @@ class CasEntry:
         4. 파장비율 계산
         5. uv 계산
         6. 측정 시간 객체 생성
+        7. 기타 정보 작성 및 수정
 
         :param fname: ISD 파일의 절대경로, :type: str
         :param debug: ISD parsing debug mode, :type: bool
@@ -108,7 +230,6 @@ class CasEntry:
             else:
                 # try:
                 if line.find('=') != -1:  # if there is '=' in a single line
-
                     strKey, strValue = line.split('=')
                     key = strKey.strip()
                     strValue = strValue.strip()
@@ -198,6 +319,9 @@ class CasEntry:
         self._general_information['file_abs_path'] = self.fname
         self._general_information['file_name'] = self.fname.split('\\')[1]
 
+        self._measurement_conditions['CCDTemperature'] = float(self._measurement_conditions['CCDTemperature'].split()[0])
+        self._measurement_conditions['DCCCDTemperature'] = float(self._measurement_conditions['DCCCDTemperature'].split()[0])
+
     def get_datetime(self, tostr=False):
         """
         측정시간 객체를 반환
@@ -267,6 +391,36 @@ class CasEntry:
                     'uv': self._uv
                     }
                  }
+        elif category == 'simple':
+            d = {'datetime': self.get_datetime(True)}
+
+            for k in self._general_information.keys():
+                try:
+                    new_key = self.newkeymap[k]
+                    d[new_key] = self._general_information[k]
+                except KeyError:
+                    continue
+
+            for k in self._measurement_conditions.keys():
+                try:
+                    new_key = self.newkeymap[k]
+                    d[new_key] = self._measurement_conditions[k]
+                except KeyError:
+                    continue
+
+            for k in self._results.keys():
+                try:
+                    new_key = self.newkeymap[k]
+                    d[new_key] = self._results[k]
+                except KeyError:
+                    continue
+
+            for k in self._uv.keys():
+                try:
+                    new_key = self.newkeymap[k]
+                    d[new_key] = self._uv[k]
+                except KeyError:
+                    continue
 
         if to_json:
             import json
@@ -339,15 +493,15 @@ class CasEntry:
                     continue
 
                 if weight_func == 'ery':
-                    from .ref_func import erythemal_action_spectrum as eryf
+                    from entries.ref_func import erythemal_action_spectrum as eryf
                     weightl = eryf(wll)
                     weightr = eryf(wlr)
                 elif weight_func == 'vitd':
-                    from .ref_func import vitd_weight_func_interpolated as vitdf
+                    from entries.ref_func import vitd_weight_func_interpolated as vitdf
                     weightl = vitdf(wll)
                     weightr = vitdf(wlr)
                 elif weight_func == 'actinic_uv':
-                    from .ref_func import actinic_uv_weight_func as actuvf
+                    from entries.ref_func import actinic_uv_weight_func as actuvf
                     weightl = actuvf(wll)
                     weightr = actuvf(wlr)
                 else:
@@ -377,13 +531,13 @@ class CasEntry:
 
 if __name__ == '__main__':
     import pprint
-    rootdir = 'D:/_nldw/20170412'
+    rootdir = 'D:/test'
     flist = CasEntry.search(rootdir)
 
     for fname in flist:
         print('>>', fname)
         entity = CasEntry(fname)
-        d = entity.get_category(category='all')
+        d = entity.get_category(category='simple')
         pprint.pprint(d)
         break
 
