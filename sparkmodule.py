@@ -3,39 +3,6 @@ from pyspark.sql.types import (IntegerType, StringType, DoubleType)
 from basemodule import Singleton
 
 
-class PySparkManager(Singleton):
-    sc = None
-
-    def __init__(self, ip='210.102.142.14', app_name='appName', master='local[*]'):
-        self.server_ip = ip
-        self.sc = self._set_spark_context(app_name, master)
-        self.sqlctxt = self._set_sql_context()
-
-    def _set_spark_context(self, app_name, master):
-        from pyspark import (SparkConf, SparkContext)
-        if self.sc:
-            return self.sc
-
-        conf = SparkConf().setAppName(app_name) \
-            .setMaster(master) \
-            .set('spark.local.ip', self.server_ip) \
-            .set('spark.driver.host', self.server_ip)
-        return SparkContext(conf=conf)
-
-    def _set_sql_context(self):
-        from pyspark.sql import SQLContext
-        return SQLContext(self.sc)
-
-    def close(self):
-        self.sc.stop()
-
-    def __enter__(self):
-        self.__init__()
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.close()
-
-
 clean_day_list = ['2017-04-13', '2017-04-19', '2017-04-24', '2017-05-01', '2017-05-17',
                   '2017-06-02', '2017-06-15', '2017-08-26', '2017-09-01', '2017-09-13',
                   '2017-09-14', '2017-09-21', '2017-09-28', '2017-10-21', '2017-10-30',
@@ -116,10 +83,11 @@ udf_day = udf(lambda date: int(date.split('-')[2]), IntegerType())
 udf_hour = udf(lambda time: int(time.split(':')[0]), IntegerType())
 udf_minute = udf(lambda time: int(time.split(':')[1]), IntegerType())
 
-udf_dt2dh = udf(lambda d, t: d + ' ' + t.split(':')[0], StringType())
+udf_dnt2dh = udf(lambda d, t: d + ' ' + t.split(':')[0], StringType())
 udf_dnt2dt = udf(lambda d, t: d + ' ' + t, StringType())
 udf_dt2d = udf(lambda dt: dt.split(' ')[0], StringType())
 udf_dt2t = udf(lambda dt: dt.split(' ')[1], StringType())
+udf_dt2h = udf(lambda dt: int(dt.split(' ')[1].split(':')[0]), IntegerType())
 udf_dh2h = udf(lambda dh: int(dh.split(' ')[1]), IntegerType())
 udf_ymd2ym = udf(lambda ymd: ymd[:-3], StringType())
 udf_date2month = udf(lambda d: d.split('-')[1], StringType())
@@ -143,3 +111,34 @@ udf_max = udf(lambda *v: max(v), DoubleType())
 udf_min = udf(lambda *v: min(v), DoubleType())
 
 
+class PySparkManager(Singleton):
+    sc = None
+
+    def __init__(self, ip='210.102.142.14', app_name='nldc_pyspark', master='local[*]'):
+        self.server_ip = ip
+        self.sc = self._set_spark_context(app_name, master)
+        self.sqlctxt = self._set_sql_context()
+
+    def _set_spark_context(self, app_name, master):
+        from pyspark import (SparkConf, SparkContext)
+        if self.sc:
+            return self.sc
+
+        conf = SparkConf().setAppName(app_name) \
+            .setMaster(master) \
+            .set('spark.local.ip', self.server_ip) \
+            .set('spark.driver.host', self.server_ip)
+        return SparkContext(conf=conf)
+
+    def _set_sql_context(self):
+        from pyspark.sql import SQLContext
+        return SQLContext(self.sc)
+
+    def close(self):
+        self.sc.stop()
+
+    def __enter__(self):
+        self.__init__()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()

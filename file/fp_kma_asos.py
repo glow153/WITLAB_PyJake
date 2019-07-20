@@ -24,7 +24,7 @@ def dropCols(spdf, drop_columns):
 
 
 def read_asos(fname):
-    old_columns = ['지점', '일시', '기온(°C)', '누적강수량(mm)', '풍향(deg)', '풍속(m/s)',
+    old_columns = ['지점', '시간', '기온(°C)', '누적강수량(mm)', '풍향(deg)', '풍속(m/s)',
                    '현지기압(hPa)', '해면기압(hPa)', '습도(%)',
                    '일사(MJ/m^2)', '일조(Sec)']
 
@@ -45,8 +45,11 @@ def read_asos(fname):
     return spdf_asos_r
 
 
-if __name__ == '__main__':
+# def joule2irrad(spdf, target_col):
+#     pdf = spdf.select(target_col).toPandas()
 
+
+if __name__ == '__main__':
     fnamelist = search('/home/witlab/asos/data')
     print(fnamelist)
 

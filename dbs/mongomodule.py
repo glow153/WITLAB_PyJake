@@ -4,13 +4,27 @@ import pymongo
 
 
 class MongoManager(Singleton):
-    def __init__(self, ip, port, user_id, passwd):
-        self.ip = ip
-        self.port = port
-        self.user_id = user_id
-        self.passwd = passwd
+    def __init__(self, conf_path='../conf/mongo.conf'):
         self.tag = 'MongoManager'
+
+        self.conf_parser = None
         self.conn = None
+
+        self._bind_conf(conf_path)
+        self._connect()
+
+    def _bind_conf(self, conf_path):
+        import configparser
+        conf_section = 'ConnectionInfo'
+        Log.d(self.tag, 'load .conf file:: filepath:', conf_path, ', section: ', conf_section)
+
+        self.conf_parser = configparser.ConfigParser()
+        self.conf_parser.read(conf_path)
+
+        self.ip = self.conf_parser.get(conf_section, 'ip')
+        self.port = self.conf_parser.get(conf_section, 'port')
+        self.id = self.conf_parser.get(conf_section, 'id')
+        self.password = self.conf_parser.get(conf_section, 'password')
 
     def __enter__(self):
         pass
@@ -18,10 +32,11 @@ class MongoManager(Singleton):
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
 
-    def create_db(self):
-        pass
+    def create_db(self, db_name):
+        new_db = self.conn[db_name]
+        Log.d(self.tag, 'database created:', new_db)
 
-    def create_collection(self):
+    def create_collection(self, db_name):
         pass
 
     def insert_doc(self):
@@ -30,12 +45,19 @@ class MongoManager(Singleton):
     def delete_doc(self):
         pass
 
-    def connect(self):
+    def _connect(self):
         if self.conn:
-            Log.d(self.tag, 'already connected: ', self.ip, self.port, self.user_id)
-        Log.d(self.tag, 'connect to MongoDB Server:', self.ip, self.port)
-        self.conn = pymongo.MongoClient('mongodb://%s:%s@%s:%s/' % (self.user_id, self.passwd, self.ip, self.port))
+            Log.d(self.tag, 'already connected: ', self.ip, self.port, self.id)
+
+        try:
+            self.conn = pymongo.MongoClient('mongodb://%s:%s@%s:%s/' % (self.id, self.password, self.ip, self.port))
+            dict_serverinfo = self.conn.server_info()
+            Log.d(self.tag, 'Succesfully connected to MongoDB Server :: ok:', dict_serverinfo['ok'],
+                  ', version:', dict_serverinfo['version'])
+        except Exception as e:
+            Log.e(self.tag, 'failed to connect to MongoDB Server (%s)' % e.__class__.__name__)
+            Log.e(self.tag, e.with_traceback)
 
     def close(self):
-        Log.d()
+        Log.d(self.tag, 'disconnecting from MongoDB Server...')
         self.conn.close()
