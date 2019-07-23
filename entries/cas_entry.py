@@ -345,7 +345,7 @@ class CasEntry:
                     Log.e(self.tag + '.get_datetime()')
                 return None
 
-    def get_category(self, category='all', str_key_type=False, to_json=False):
+    def get_category(self, category='basic', str_key_type=False, to_json=False):
         """
         ISD 파일의 큰 범주에 해당하는 전체 데이터를 dictionary 형태로 반환
         :param category: 범주 이름
@@ -386,7 +386,7 @@ class CasEntry:
                     }
                  }
 
-        elif category == 'except_sp_ird':
+        elif category == 'basic':
             d = {'datetime': self.get_datetime(True),
                  'data': {
                     'measurement_conditions': self._measurement_conditions,
@@ -395,6 +395,13 @@ class CasEntry:
                     'uv': self._uv
                     }
                  }
+
+        elif category == 'ird':
+            d = {
+                'datetime': self.get_datetime(tostr=True),
+                'sp_ird': sp_ird if str_key_type else self._sp_ird
+            }
+
         elif category == 'simple':
             d = {'datetime': self.get_datetime(True)}
 
