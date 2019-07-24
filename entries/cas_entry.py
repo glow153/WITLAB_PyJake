@@ -163,7 +163,7 @@ class CasEntry:
         self.debug = debug
         try:
             if sys.platform == 'win32':
-                self.tag = 'CasEntry(%s)' % fname.split('\\')[1]
+                self.tag = 'CasEntry(%s)' % fname.split('\\')[-1]
             else:
                 self.tag = 'CasEntry(%s)' % fname.split('/')[-1]
         except:
@@ -326,8 +326,12 @@ class CasEntry:
     def set_additional_data(self):
         import sys
         self._general_information['file_abs_path'] = self.fname
+
+        # Log.e(self.tag + '.set_additional_data()', 'sys.platform = ', sys.platform)
+        # Log.e(self.tag + '.set_additional_data()', 'file_abs_path = ', self.fname)
+
         if sys.platform == 'win32':
-            self._general_information['file_name'] = self.fname.split('\\')[1]
+            self._general_information['file_name'] = self.fname.split('\\')[-1]
         else:
             self._general_information['file_name'] = self.fname.split('/')[-1]
 
