@@ -1,7 +1,7 @@
 import datetime
 import os
 
-from lib.debugmodule import Log
+from debugmodule import Log
 
 
 class CasEntry:
