@@ -32,15 +32,16 @@ class MongoManager(Singleton):
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
 
-    def create_db(self, db_name):
-        new_db = self.conn[db_name]
-        Log.d(self.tag, 'database created:', new_db)
+    def select_doc(self, filter: dict, db_name: str, collection_name: str):
+        db = self.conn.get_database(db_name)
+        collection = db.get_collection(collection_name)
+        return collection.find(filter)
 
-    def create_collection(self, db_name):
-        pass
-
-    def insert_doc(self):
-        pass
+    def insert_doc(self, data: dict, db_name: str, collection_name: str):
+        db = self.conn.get_database(db_name)
+        collection = db.get_collection(collection_name)
+        id = collection.insert_one(data).inserted_id
+        Log.d(self.tag, 'insertion succeed:', data[:50] + '...' if len(str(data)) > 50 else data, ':', id)
 
     def delete_doc(self):
         pass
