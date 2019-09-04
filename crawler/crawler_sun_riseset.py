@@ -10,6 +10,10 @@ class SunRiseSetCrawler(AbsCrawler):
         super().__init__(base_url, tag='SunRiseSetCrawler', crawl_type='dynamic', debug=debug)
 
     def print_usage(self):
+        """
+        사이트 개편 이후 주소 인자 필요 없어지고 위경도가 필수항목으로 들어가게 됨
+        :return:
+        """
         print('필수항목 : lat=(위도)&lon=(경도)&date=(날짜)')
 
     def _make_url(self, **kwargs):
@@ -28,28 +32,32 @@ class SunRiseSetCrawler(AbsCrawler):
         try:
             lat, lon = str(kwargs['lat']), str(kwargs['lon'])
         except KeyError:  # witlab
-            lat, lon = '36.8523', '127.1510'
-            kwargs['lat'] = lat
-            kwargs['lon'] = lon
+            lat = '36.850490744236744'
+            lon = '127.15250390636234'
+
+        kwargs['lat'] = lat
+        kwargs['lon'] = lon
 
         url = self._make_url(**kwargs)
         Log.d(self.tag, 'request url :' + url)
         self._driver.get(url)
+
         soup = BeautifulSoup(self._driver.page_source, 'html.parser')
 
         sunrise = soup.find_all('span', {'class': 'sunrise'})[0].string
         culmination = soup.find_all('span', {'class': 'culmination'})[0].string
         sunset = soup.find_all('span', {'class': 'sunset'})[0].string
 
+        Log.d(self.tag, 'result:', sunrise, culmination, sunset)
+
         sr = sunrise[0:2] + ':' + sunrise[4:-1]
         cul = culmination[0:2] + ':' + culmination[4:-1]
         ss = sunset[0:2] + ':' + sunset[4:-1]
 
         Log.d(self.tag, date, lat, lon, ': %s %s %s' % (sr, cul, ss))
-
         return [kwargs['date'], sr, cul, ss]
 
-    def make_dataset_csv(self, local_outfilepath, start_date, end_date, address):
+    def make_dataset_csv(self, local_outfilepath, start_date, end_date):
         import csv
 
         # set vals for scrap
@@ -62,7 +70,7 @@ class SunRiseSetCrawler(AbsCrawler):
         csv_writer = csv.writer(outfile)
 
         while sdt <= edt:
-            sunrslist = self.scrap(date=sdt.strftime('%Y-%m-%d'), address=address)
+            sunrslist = self.scrap(date=sdt.strftime('%Y-%m-%d'))
             csv_writer.writerow(sunrslist)
             ptstr = ''
             for s in sunrslist:
@@ -72,14 +80,20 @@ class SunRiseSetCrawler(AbsCrawler):
 
         outfile.close()
 
-    # def csv2parquet(self, local_infilepath: str, hdfs_outpath: str):
-    #     pysparkmgr = PySparkManager()
-    #     srs = pysparkmgr.sc.textFile(local_infilepath) \
-    #         .map(lambda s: s.split(",")) \
-    #         .map(lambda s: Row(datetime=s[0], rise=s[1], culmination=s[2], set=s[3])) \
-    #         .toDF()
-    #
-    #     srs.write.mode('overwrite').parquet(hdfs_outpath)
+    def dataset_to_db(self, start_date, end_date):
+        import pandas as pd
+        # set vals for scrap
+        oneday = timedelta(days=1)
+        sdt = datetime.strptime(start_date, '%Y-%m-%d')
+        edt = datetime.strptime(end_date, '%Y-%m-%d')
+
+        while sdt <= edt:
+            sunrslist = self.scrap(date=sdt.strftime('%Y-%m-%d'))
+            pdf = pd.DataFrame([sunrslist], columns=['date', 'rise', 'culmination', 'set'])
+            Log.d(self.tag, '\n', pdf)
+            self.to_db(pdf, username='root', passwd='defacto8*jj', host='210.102.142.14', port=3306,
+                       db_name='nl_witlab', table_name='kasi_sun_riseset')
+            sdt = sdt + oneday
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
@@ -87,8 +101,7 @@ class SunRiseSetCrawler(AbsCrawler):
 
 if __name__ == '__main__':
     src = SunRiseSetCrawler(True)
-    r = src.scrap()
-    print(r)
+    src.dataset_to_db('2017-01-01', '2020-12-31')
     src.close()
 
 
