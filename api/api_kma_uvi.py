@@ -59,6 +59,10 @@ class KmaUvi(AbsApi):
             # self._pdf.sort_values(by=['date', 'time'], axis=0, ascending=False)
 
             if kwargs['term'] == '10min':
+                # 가장 최근 10분 단위 데이터 가져오기
+                # 약간 문제가 있음... (19-09-06)
+                # 원인: 각 측정소에서 UVI를 측정할 때 10분 이상 소요되고
+                #      그 시간차가 측정소마다 제각각인 문제가 있는듯
                 dtobj = datetime.datetime.now()
                 date = dtobj.strftime('%Y-%m-%d')
                 minute = int(dtobj.minute / 10) * 10
@@ -84,11 +88,12 @@ class KmaUvi(AbsApi):
             for _station_code in station_list:
                 payload = self._make_payload(stn_code=_station_code, **log_prop)
                 self._req_api(method='post', query_param='', payload=payload)
+                Log.d(self.tag, 'response:', self._json_dict)
                 self._json2pdf(term=log_prop['term'])
                 if 'hdfs' in db_type:
                     self.pdf2hdfs(mode=mode)
-                if 'mysql' in db_type:
-                    self.pdf2mysql(table_name='kma_uvi', if_exists='append')
+                # if 'mysql' in db_type:
+                #     self.pdf2mysql(table_name='kma_uvi', if_exists='append')
 
         except KeyError:
             Log.e(self.tag, 'wrong log properties error! :', log_prop)
@@ -98,14 +103,12 @@ class KmaUvi(AbsApi):
 
 
 if __name__ == "__main__":
-    from dbs.mysqlmodule import PySparkManager
-    spdf_uvi = PySparkManager().sqlctxt.read.parquet('hdfs:///nl/kma/uvi/uvi_10min.parquet')
-    spdf_uvi = spdf_uvi.withColumnRenamed('site_code', 'station_code')
-    spdf_uvi.write.mode('overwrite').parquet('hdfs:///nl/kma/uvi_10min.parquet')
-    # kma_uvi = KmaUvi()
-    # kma_uvi.normalize_parquet()
-
-    # kma_uvi.log(['hdfs'], station='all', term='10min')
+    # from ..sparkmodule import PySparkManager
+    # spdf_uvi = PySparkManager().sqlctxt.read.parquet('hdfs:///nl/kma/uvi/uvi_10min.parquet')
+    # spdf_uvi = spdf_uvi.withColumnRenamed('site_code', 'station_code')
+    # spdf_uvi.write.mode('overwrite').parquet('hdfs:///nl/kma/uvi_10min.parquet')
+    kma_uvi = KmaUvi()
+    kma_uvi.log(['hdfs'], station='all', term='daily')
 
     # dt_start = datetime.datetime.strptime('2019-06-25', '%Y-%m-%d')
     # dt_end = datetime.datetime.strptime('2019-06-26', '%Y-%m-%d')
