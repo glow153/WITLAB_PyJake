@@ -89,13 +89,16 @@ class RealtimeKmaWeather(AbsApi):
             sadt = obj_basedt.strftime('%Y%m%d %H%M').split(' ')
 
         # 주소 문자열을 토대로 기상청 동네예보 좌표를 구함
-        nx, ny = self._get_localweather_coord(station)
+        try:
+            nx, ny = self._get_localweather_coord(station)
+        except Exception:
+            nx, ny = 63, 111
 
         query_params = '?serviceKey=' + self._service_key \
                        + '&base_date=' + sadt[0] \
                        + '&base_time=' + sadt[1] \
-                       + '&nx=' + nx \
-                       + '&ny=' + ny \
+                       + '&nx=' + str(nx) \
+                       + '&ny=' + str(ny) \
                        + '&numOfRows=20&_type=json'
 
         return query_params

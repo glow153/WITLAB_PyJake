@@ -61,6 +61,13 @@ class AbsApi(metaclass=ABCMeta):
         pass
 
     def _req_api(self, method: str, query_param: str, payload):
+        """
+        api에 요청 1회 전송 기능 담당
+        :param method: HTTP method명. 'get' or 'post'
+        :param query_param: self._make_query_param()의 return값 입력
+        :param payload: self._make_payload()의 return값 입력
+        :return:
+        """
         json_response = None
         while not json_response:
             try:
@@ -85,7 +92,7 @@ class AbsApi(metaclass=ABCMeta):
         api마다 json형식이 모두 다르므로 개발자가 직접 구현해주어야함,
         pdf 객체를 만든 다음엔 AbsApi 객체 내부변수로 저장, 리턴 x
         :param kwargs: pandas dataframe 생성에 필요한 input data
-        :return: nothing
+        :return: pandas dataframe parse 정상완료 여부
         """
         pass
 
@@ -108,13 +115,18 @@ class AbsApi(metaclass=ABCMeta):
             Log.e(self.tag, 'pdf is empty! : ', e.__class__.__name__)
             return
 
-        Log.d(self.tag, 'pdf -> hdfs :: ', firstrow)
+        Log.d(self.tag, 'pdf(%s) -> %s' % (firstrow, path))
 
         # make spark dataframe
         self._spdf = PySparkManager().sqlctxt.createDataFrame(self._pdf)
 
         # append new data
-        self._spdf.write.mode(mode).parquet(path)
+        try:
+            self._spdf.write.mode(mode).parquet(path)
+        except Exception:
+            Log.e(self.tag, 'cannot append row(s).')
+            self._spdf.show()
+            return
 
         Log.d(self.tag, 'parquet write completed.')
 
@@ -161,6 +173,9 @@ class AbsApi(metaclass=ABCMeta):
     def normalize_parquet(self, hdfs_path='', sort_col=None):
         from sparkmodule import PySparkManager
         """
+        TROUBLE ISSUES
+        191022) deprecated: DON'T USE THIS! IT MAY CORRUPT YOUR DATAFRAME!
+        
         parquet 형식의 spark dataframe을 중복제거, 시간 정렬 등 정규화(normalize)하는 메소드
         로깅을 같은 날 데이터를 두번 했다거나 하면 한번씩 normalize 해줘야함
         :param hdfs_path:
