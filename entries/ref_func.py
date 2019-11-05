@@ -100,3 +100,12 @@ def actinic_uv_weight_func(wavelength, dbg=False):
     else:
         return 0
 
+
+if __name__ == '__main__':
+    # 홍반가중함수 테이블 뽑기
+    wls = [x for x in range(250, 401)]
+    print(wls[:5], '...', wls[-5:])
+
+    for wl in wls:
+        print(wl, '\t', erythemal_action_spectrum(wl))
+

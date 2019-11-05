@@ -554,6 +554,30 @@ class CasEntry:
         else:
             return
 
+    def get_weighted_spird(self, weight_func):
+        """
+        분광 데이터로부터 특정 가중함수가 적용된 분광복사조도 산출
+        :param weight_func: 가중함수 선택
+                            홍반가중함수('ery'), 비타민 d 가중함수('vitd'),
+                            화학적자외선위해('actinic_uv')
+        :return: 분광복사조도 :type: dict
+        """
+        from entries.ref_func import erythemal_action_spectrum as eryf
+        from entries.ref_func import vitd_weight_func_interpolated as vitdf
+        from entries.ref_func import actinic_uv_weight_func as actuvf
+
+        spird = {}
+        wls = list(self._sp_ird.keys())
+        for wl in wls:
+            if weight_func == 'ery':
+                spird[wl] = self._sp_ird[wl] * eryf(wl)
+            elif weight_func == 'vitd':
+                spird[wl] = self._sp_ird[wl] * vitdf(wl)
+            elif weight_func == 'actinic_uv':
+                spird[wl] = self._sp_ird[wl] * actuvf(wl)
+
+        return spird
+
 
 if __name__ == '__main__':
     import pprint
