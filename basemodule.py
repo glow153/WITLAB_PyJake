@@ -11,6 +11,17 @@ from debugmodule import Log
 
 
 class Singleton(object):
+    """
+    Singleton pattern
+    사용법 : 그냥 상속하면 된다
+    ex) define: class Foo(Singleton):
+                    def bar():
+                        blabla
+
+        create: foo = Foo()
+                foo.bar()
+        ...
+    """
     _instance = None
 
     def __new__(cls, *args, **kwargs):
