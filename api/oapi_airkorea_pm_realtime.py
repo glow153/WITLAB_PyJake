@@ -111,16 +111,26 @@ class RealtimeParticulateMatter(AbsApi):
                    data['pm10Value'], data['pm25Value']]
             rawdata.append(row)
 
+        if not rawdata:  # rawdata mapping 실패시 탈출
+            Log.e(self.tag, 'parse error: rawdata is empty.')
+            return False
+
         Log.d(self.tag, 'get data from api:', str(rawdata))
 
-        # make pandas dataframe
-        self._pdf = pd.DataFrame(rawdata)
+        try:
+            # make pandas dataframe
+            self._pdf = pd.DataFrame(rawdata)
 
-        # set new column name
-        self._pdf.columns = self._column
+            # set new column name
+            self._pdf.columns = self._column
 
-        if kwargs['term'] == 'hourly':  # hourly data
-            self._pdf = self._pdf.sort_values(by=['datehour'], ascending=False).iloc[:1]
+            if kwargs['term'] == 'hourly':  # hourly data
+                self._pdf = self._pdf.sort_values(by=['datehour'], ascending=False).iloc[:1]
+            return True
+
+        except Exception as e:
+            Log.e(self.tag, 'exception occurred: %s' % e)
+            return False
 
     def log(self, db_type: list, mode='append', **kwargs):
         # kwargs : {station='cheonan_all', term='daily'}
@@ -132,8 +142,11 @@ class RealtimeParticulateMatter(AbsApi):
 
         for _station in station_list:
             query_param = self._make_query_param(station=_station, term=kwargs['term'])
-            self._req_api(method='get', query_param=query_param, payload=None)
-            self._json2pdf(term=kwargs['term'])
+            while True:
+                self._req_api(method='get', query_param=query_param, payload=None)
+                if self._json2pdf(term=kwargs['term']):
+                    break
+
             if 'hdfs' in db_type:
                 self.pdf2hdfs(mode=mode)
             if 'mysql' in db_type:
@@ -146,6 +159,4 @@ if __name__ == '__main__':
     pm = RealtimeParticulateMatter(key)
     pm.log(['hdfs'], mode='append', station='cheonan_all', term='3month')
 
-    # normalize
-    # pm.normalize_parquet()
 
