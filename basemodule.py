@@ -14,13 +14,14 @@ class Singleton(object):
     """
     Singleton pattern
     사용법 : 그냥 상속하면 된다
-    ex) define: class Foo(Singleton):
+    ex) define> class Foo(Singleton):
                     def bar():
                         blabla
 
-        create: foo = Foo()
+        create> foo = Foo()
                 foo.bar()
         ...
+        usage > Foo().bar()
     """
     _instance = None
 
