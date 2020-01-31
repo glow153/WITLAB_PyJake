@@ -75,6 +75,7 @@ class AbsApi(metaclass=ABCMeta):
     def _req_api(self, method: str, query_param: str, payload):
         """
         api에 요청 1회 전송 기능 담당
+        response 데이터가 없을 때에는 올바로 받을 때까지 반복적으로 request 수행
         :param method: HTTP method명. 'get' or 'post'
         :param query_param: self._make_query_param()의 return값 입력
         :param payload: self._make_payload()의 return값 입력

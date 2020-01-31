@@ -2,25 +2,28 @@ from entries.cas_entry import CasEntry
 import csv
 
 
-dirname = 'C:/Users/WitLab-DaeHwan/Desktop/ledtest'
+dirname = 'C:/Users/WitLab-DaeHwan/Desktop/20190207'
 fnamelist = CasEntry.search(dirname)
-outfile = open(dirname + '/output_20190708.csv', 'w', encoding='utf-8', errors='ignore', newline='')
+outfile = open(dirname + '/output.csv', 'w', encoding='utf-8', errors='ignore', newline='')
 cw = csv.writer(outfile)
 
-cw.writerow(['time', 'illum', 'cct', 'swr', 'narrow'])
+cw.writerow(['time', 'illum', 'cct', 'swr', 'uva', 'uvb', 'euva', 'euvb', 'uvi', 'auv'])
+
 for fname in fnamelist:
     entry = CasEntry(fname, debug=True)
     if not entry.valid:
         continue
     time = entry.get_datetime(tostr=True)
-    illum = entry.get_attrib('Photometric')
-    cct = entry.get_attrib('CCT')
-    swr = entry.get_attrib('swr')
-    narrow = entry.get_attrib('narr')
+    time = entry.get_attrib()
+    uva = entry.get_ird(315, 400)
+    uvb = entry.get_ird(280, 315)
+    euva = entry.get_ird(315, 400, weight_func='ery')
+    euvb = entry.get_ird(280, 315, weight_func='ery')
+    uvi = entry.get_ird(280, 400, weight_func='ery')
 
-    row = [time, illum, cct, swr, narrow]
+    row = []
 
     cw.writerow(row)
-    print(fname, ':', row)
+    print(entry.get_attrib('file_name'), ':', row)
 
 outfile.close()
